@@ -149,7 +149,7 @@ export interface ParseResult {
 export interface ParserOptions {
   backend?: "auto" | "webgpu" | "cpu";
   tokens?: boolean;
-  /** Ambiguous numeric dates only; defaults to MDY. Named months and year-first dates are unchanged. */
+  /** Ambiguous numeric dates only; defaults to DMY. Named months and year-first dates are unchanged. */
   dateOrder?: "MDY" | "DMY";
 }
 export interface ResolveOptions {

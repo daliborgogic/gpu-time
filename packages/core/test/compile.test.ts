@@ -19,11 +19,11 @@ export function oracle(
 }
 
 it("composes a quantity and unit as a duration without an introducer", () => {
-  const text = "90 days";
+  const text = "90 dana";
   expect(compile(text, oracle(text, ["NUM", "UNIT"]))[0].schedule).toEqual({
     clauses: [{ duration: { amount: 90, unit: "day" } }],
   });
-  const dated = "tomorrow two hours";
+  const dated = "sutra dva sata";
   expect(
     compile(dated, oracle(dated, ["REL_DAY", "NUM", "UNIT"]))[0].schedule,
   ).toEqual({
@@ -37,7 +37,7 @@ it("composes a quantity and unit as a duration without an introducer", () => {
 });
 
 it("rejects multiple duration values instead of silently replacing one", () => {
-  const text = "for two hours for three minutes";
+  const text = "za dva sata za tri minuta";
   const result = compile(
     text,
     oracle(text, ["DUR", "NUM", "UNIT", "DUR", "NUM", "UNIT"]),
@@ -49,12 +49,12 @@ it("rejects multiple duration values instead of silently replacing one", () => {
 });
 
 it.each([
-  ["two in the afternoon", 14],
-  ["five in the morning", 5],
-  ["seven in the evening", 19],
-  ["twelve in the morning", 0],
-  ["twelve in the afternoon", 12],
-  ["two in afternoon", 14],
+  ["dva popodne", 14],
+  ["pet ujutru", 5],
+  ["sedam uveče", 19],
+  ["dvanaest ujutru", 0],
+  ["dvanaest popodne", 12],
+  ["2 popodne", 14],
 ])("assembles a clock period identified by the model: %s", (text, hour) => {
   const labels = tokenize(text)
     .filter((token) => token.kind !== 3)
@@ -65,9 +65,9 @@ it.each([
 });
 
 it("ignores model-labeled filler inside semantic values while retaining source spans", () => {
-  const text = "twelve in the afternoon";
-  const tokens = oracle(text, ["HOUR", "MERIDIEM", "GLUE", "MERIDIEM"]);
-  tokens.find((token) => token.text === "the")!.score = 0.01;
+  const text = "dvanaest baš popodne";
+  const tokens = oracle(text, ["HOUR", "GLUE", "MERIDIEM"]);
+  tokens.find((token) => token.text === "baš")!.score = 0.01;
   const result = compile(text, tokens)[0];
   expect(result.schedule).toEqual({
     clauses: [{ time: { start: { hour: 12, minute: 0 } } }],
@@ -76,12 +76,12 @@ it("ignores model-labeled filler inside semantic values while retaining source s
   expect(result.start).toBe(0);
   expect(result.end).toBe(text.length);
   expect(result.confidence).toBe(1);
-  expect(tokens.find((token) => token.text === "the")?.label).toBe("GLUE");
+  expect(tokens.find((token) => token.text === "baš")?.label).toBe("GLUE");
 });
 
 it("assembles a learned relative quantity range and rejects reversed bounds", () => {
   const labels: Label[] = ["DIR_AFTER", "NUM", "RANGE_END", "NUM", "UNIT"];
-  const text = "in 5 to 10 minutes";
+  const text = "za 5 do 10 minuta";
   expect(compile(text, oracle(text, labels))[0].schedule).toEqual({
     clauses: [
       {
@@ -89,12 +89,12 @@ it("assembles a learned relative quantity range and rejects reversed bounds", ()
       },
     ],
   });
-  const reversed = "in 10 to 5 minutes";
+  const reversed = "za 10 do 5 minuta";
   expect(compile(reversed, oracle(reversed, labels))[0].schedule).toBeNull();
 });
 
 it("distributes each time window to its adjacent weekday list without connectors", () => {
-  const text = "Sat Sun 1pm-8pm Mon 10pm-12am";
+  const text = "Sub Ned 1popodne-8popodne Pon 10popodne-12ujutru";
   const tokens = oracle(
     text,
     [
@@ -112,7 +112,7 @@ it("distributes each time window to its adjacent weekday list without connectors
       "HOUR",
       "MERIDIEM",
     ],
-    [text.indexOf("Mon")],
+    [text.indexOf("Pon")],
   );
   expect(compile(text, tokens)[0]).toMatchObject({
     start: 0,
@@ -137,7 +137,7 @@ it("distributes each time window to its adjacent weekday list without connectors
   });
 });
 it("preserves explicit recurrence, intervals, bounds, and excluded weekdays", () => {
-  const text = "every other Tuesday until Dec except Friday";
+  const text = "svaki drugi utorak do dec osim petak";
   const tokens = oracle(text, [
     "RECUR",
     "NUM",
@@ -162,7 +162,7 @@ it("preserves explicit recurrence, intervals, bounds, and excluded weekdays", ()
   });
 });
 it("retains a relative amount and its named anchor instead of resolving now", () => {
-  const text = "two hours before tomorrow at noon";
+  const text = "dva sata pre sutra u podne";
   expect(
     compile(
       text,
@@ -194,8 +194,8 @@ it("rejects unknown values even when the model assigns a confident temporal labe
 
 it("returns diagnostics when the model predicts a bound without an attached date", () => {
   for (const [text, labels] of [
-    ["every Monday until", ["RECUR", "WEEKDAY", "BOUND_END"]],
-    ["starting", ["BOUND_START"]],
+    ["svaki ponedeljak do", ["RECUR", "WEEKDAY", "BOUND_END"]],
+    ["počevši", ["BOUND_START"]],
   ] satisfies [string, Label[]][]) {
     const result = compile(text, oracle(text, labels))[0];
     expect(result.schedule).toBeNull();
@@ -204,21 +204,21 @@ it("returns diagnostics when the model predicts a bound without an attached date
 });
 
 it("does not silently complete an unfinished range or recurrence", () => {
-  const range = "Monday 5pm to";
+  const range = "ponedeljak 5popodne do";
   expect(
     compile(
       range,
       oracle(range, ["WEEKDAY", "HOUR", "MERIDIEM", "RANGE_END"]),
     )[0].diagnostics[0].code,
   ).toBe("incomplete-range");
-  const recurrence = "every";
+  const recurrence = "svaki";
   expect(
     compile(recurrence, oracle(recurrence, ["RECUR"]))[0].diagnostics[0].code,
   ).toBe("incomplete-recurrence");
 });
 
 it("does not invent a time window when the model omitted its relationship", () => {
-  const text = "Monday 9 Tuesday 10";
+  const text = "ponedeljak 9 utorak 10";
   const result = compile(
     text,
     oracle(text, ["WEEKDAY", "HOUR", "WEEKDAY", "HOUR"]),
@@ -229,11 +229,11 @@ it("does not invent a time window when the model omitted its relationship", () =
 
 it("infers the missing period across noon and midnight without changing explicit periods", () => {
   for (const [text, labels, start, end] of [
-    ["9am to 5", ["HOUR", "MERIDIEM", "RANGE_END", "HOUR"], 9, 17],
-    ["10 to 2am", ["HOUR", "RANGE_END", "HOUR", "MERIDIEM"], 22, 2],
-    ["8 to midnight", ["HOUR", "RANGE_END", "TIME_NAMED"], 20, undefined],
+    ["9ujutru do 5", ["HOUR", "MERIDIEM", "RANGE_END", "HOUR"], 9, 17],
+    ["10 do 2ujutru", ["HOUR", "RANGE_END", "HOUR", "MERIDIEM"], 22, 2],
+    ["8 do ponoć", ["HOUR", "RANGE_END", "TIME_NAMED"], 20, undefined],
     [
-      "10pm to 12pm",
+      "10popodne do 12popodne",
       ["HOUR", "MERIDIEM", "RANGE_END", "HOUR", "MERIDIEM"],
       22,
       12,
@@ -246,7 +246,7 @@ it("infers the missing period across noon and midnight without changing explicit
       end === undefined ? { named: "midnight" } : { hour: end, minute: 0 },
     );
   }
-  const equal = "9:00:00 to 9am";
+  const equal = "9:00:00 do 9ujutru";
   expect(
     compile(
       equal,
@@ -265,7 +265,7 @@ it("infers the missing period across noon and midnight without changing explicit
 });
 
 it("handles malformed model roles and boundaries without throwing or emitting invalid diagnostic offsets", () => {
-  const text = "Monday 5 at noon every 3 days until tomorrow";
+  const text = "ponedeljak 5 u podne svaki 3 dana do sutra";
   let state = 123456;
   const random = () => {
     state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
@@ -308,7 +308,7 @@ it("applies numeric date order only to ambiguous date fields identified by the m
       ["YEAR", "GLUE", "MONTH", "GLUE", "DOM"],
       { year: 2026, month: 3, day: 4 },
     ],
-    ["March 4", ["MONTH", "DOM"], { month: 3, day: 4 }],
+    ["Mart 4", ["MONTH", "DOM"], { month: 3, day: 4 }],
     ["23/4", ["DOM", "GLUE", "MONTH"], { month: 4, day: 23 }],
   ] satisfies [string, Label[], object][]) {
     expect(
@@ -320,12 +320,12 @@ it("applies numeric date order only to ambiguous date fields identified by the m
 it("assembles the uncovered core forms from explicit semantic labels", () => {
   const examples: [string, Label[], object][] = [
     [
-      "the day after tomorrow",
-      ["REL_DAY", "REL_DAY", "REL_DAY", "REL_DAY"],
+      "prekosutra",
+      ["REL_DAY"],
       { date: { kind: "relativeDay", offset: 2 } },
     ],
     [
-      "end of next month",
+      "kraj od sledeći mesec",
       ["EDGE", "GLUE", "DEICTIC", "UNIT"],
       {
         date: {
@@ -337,7 +337,7 @@ it("assembles the uncovered core forms from explicit semantic labels", () => {
       },
     ],
     [
-      "3 weeks from now",
+      "3 nedelje od sada",
       ["NUM", "UNIT", "DIR_AFTER", "NOW"],
       {
         date: { kind: "now" },
@@ -345,7 +345,7 @@ it("assembles the uncovered core forms from explicit semantic labels", () => {
       },
     ],
     [
-      "a week before Christmas",
+      "jedna nedelja pre Božić",
       ["NUM", "UNIT", "DIR_BEFORE", "HOLIDAY"],
       {
         date: { kind: "holiday", name: "christmas" },
@@ -353,12 +353,12 @@ it("assembles the uncovered core forms from explicit semantic labels", () => {
       },
     ],
     [
-      "this weekend",
+      "ovaj vikend",
       ["DEICTIC", "DAYGROUP"],
       { date: { kind: "dayGroup", group: "weekend", modifier: "this" } },
     ],
     [
-      "every day through Friday",
+      "svaki dan do petak",
       ["RECUR", "UNIT", "BOUND_END", "WEEKDAY"],
       {
         recurrence: {
@@ -377,15 +377,15 @@ it("assembles the uncovered core forms from explicit semantic labels", () => {
 
 it("composes model-labeled spoken minutes and fractional clocks", () => {
   const examples: [string, Label[], number, number][] = [
-    ["eight forty", ["HOUR", "MINUTE"], 8, 40],
+    ["osam četrdeset", ["HOUR", "MINUTE"], 8, 40],
     [
-      "ten thirty-five pm",
-      ["HOUR", "MINUTE", "MINUTE", "MINUTE", "MERIDIEM"],
+      "deset trideset pet popodne",
+      ["HOUR", "MINUTE", "MINUTE", "MERIDIEM"],
       22,
       35,
     ],
     [
-      "quarter to twelve am",
+      "četvrt do dvanaest ujutru",
       ["CLOCK_OFFSET", "GLUE", "HOUR", "MERIDIEM"],
       23,
       45,
@@ -398,7 +398,7 @@ it("composes model-labeled spoken minutes and fractional clocks", () => {
 });
 
 it("keeps a combined shift distinct from an occurrence duration", () => {
-  const text = "in two days and six hours for half an hour";
+  const text = "za dva dana i šest sati za pola sata";
   const result = compile(
     text,
     oracle(text, [
@@ -409,7 +409,6 @@ it("keeps a combined shift distinct from an occurrence duration", () => {
       "NUM",
       "UNIT",
       "DUR",
-      "NUM",
       "NUM",
       "UNIT",
     ]),
@@ -430,7 +429,7 @@ it("keeps a combined shift distinct from an occurrence duration", () => {
 });
 
 it("does not invent fractional calendar durations", () => {
-  const text = "for 1.5 months";
+  const text = "za 1.5 meseca";
   expect(
     compile(text, oracle(text, ["DUR", "NUM", "NUM", "NUM", "UNIT"]))[0]
       .schedule,
@@ -450,7 +449,7 @@ it("validates ISO date order independently of the model's month/day roles", () =
 });
 
 it("reports a missing recurrence bound when until is recognized as a range separator", () => {
-  const text = "every Monday until";
+  const text = "svaki ponedeljak do";
   const result = compile(
     text,
     oracle(text, ["RECUR", "WEEKDAY", "RANGE_END"]),
@@ -462,7 +461,7 @@ it("reports a missing recurrence bound when until is recognized as a range separ
 });
 
 it("reads an open upper bound from a bare direction token", () => {
-  const text = "after 6pm";
+  const text = "posle 6popodne";
   expect(
     compile(text, oracle(text, ["DIR_AFTER", "HOUR", "MERIDIEM"]))[0].schedule,
   ).toEqual({
@@ -471,7 +470,7 @@ it("reads an open upper bound from a bare direction token", () => {
 });
 
 it("floors an open lower bound at midnight", () => {
-  const text = "before 6pm";
+  const text = "pre 6popodne";
   expect(
     compile(text, oracle(text, ["DIR_BEFORE", "HOUR", "MERIDIEM"]))[0].schedule,
   ).toEqual({
@@ -488,7 +487,7 @@ it("floors an open lower bound at midnight", () => {
 });
 
 it("rejects an open bound with no clock instead of dropping the direction", () => {
-  const text = "after Friday";
+  const text = "posle petak";
   const result = compile(text, oracle(text, ["DIR_AFTER", "WEEKDAY"]))[0];
   expect(result.schedule).toBeNull();
   expect(result.diagnostics.map((value) => value.code)).toContain(
@@ -497,7 +496,7 @@ it("rejects an open bound with no clock instead of dropping the direction", () =
 });
 
 it("rejects an open bound applied to a range", () => {
-  const text = "after 8 to 10pm";
+  const text = "posle 8 do 10popodne";
   const result = compile(
     text,
     oracle(text, ["DIR_AFTER", "HOUR", "RANGE_END", "HOUR", "MERIDIEM"]),
@@ -509,7 +508,7 @@ it("rejects an open bound applied to a range", () => {
 });
 
 it("marks a bare range start as open rather than returning a bare instant", () => {
-  const open = "from 6pm";
+  const open = "od 6popodne";
   expect(
     compile(open, oracle(open, ["RANGE_START", "HOUR", "MERIDIEM"]))[0]
       .schedule,
@@ -517,7 +516,7 @@ it("marks a bare range start as open rather than returning a bare instant", () =
     clauses: [{ time: { start: { hour: 18, minute: 0 }, open: "end" } }],
   });
 
-  const closed = "from 8 to 10pm";
+  const closed = "od 8 do 10popodne";
   expect(
     compile(
       closed,

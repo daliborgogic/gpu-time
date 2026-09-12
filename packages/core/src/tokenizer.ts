@@ -44,8 +44,19 @@ function hash(text: string): number {
   return value >>> 0;
 }
 
+// Serbian Latin diacritics fold to their base letter for shape purposes; the
+// full word hash elsewhere still distinguishes "č" from "c".
+const diacritics: Record<string, string> = {
+  š: "s",
+  č: "c",
+  ć: "c",
+  ž: "z",
+  đ: "d",
+};
+
 function characterClass(character: string): number {
-  const code = character.toLowerCase().charCodeAt(0);
+  const lower = character.toLowerCase();
+  const code = (diacritics[lower] ?? lower).charCodeAt(0);
 
   if (code >= 97 && code <= 122) return code - 97;
   if (code >= 48 && code <= 57) return code - 48 + 26;
@@ -113,7 +124,9 @@ function shape(word: string): TokenShape {
       (Number(hasUppercase && word === word.toUpperCase()) << 1) |
       (Number(/\d/.test(word)) << 2),
     punctuation: punctuationClass(word),
-    ordinal: /^(st|nd|rd|th)$/.test(folded),
+    // A period right after a number is Serbian's ordinal marker ("12." for
+    // "12th"), unlike a period after a letter word (an abbreviation like "pon.").
+    ordinal: folded === ".",
   };
   // Bound both the entry count and retained word length. Context and predictions
   // are never cached: the same word can mean something different elsewhere.

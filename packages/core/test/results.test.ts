@@ -13,10 +13,10 @@ afterAll(() => parser.dispose());
 
 it("keeps batch results equivalent to individual calls and independently mutable", async () => {
   const texts = [
-    "every Friday",
-    "tomorrow at noon",
-    "27pm",
-    "tomorrow at noon",
+    "svaki petak",
+    "sutra u podne",
+    "27popodne",
+    "sutra u podne",
   ];
   const batch = await parser.parseMany(texts, context);
   const single = await Promise.all(
@@ -33,7 +33,7 @@ it("keeps batch results equivalent to individual calls and independently mutable
 
 it("keeps resolution failures local to expressions when sharing a context", async () => {
   const results = await parser.parseMany(
-    ["May I have your second opinion?", "tomorrow"],
+    ["Mogu li da čujem vaše drugo mišljenje?", "sutra"],
     { ...context, until: "2020-01-01" },
   );
   expect(results[0].diagnostics).toEqual([]);
@@ -45,14 +45,17 @@ it("keeps resolution failures local to expressions when sharing a context", asyn
 it("requires an explicit timezone from JavaScript callers too", async () => {
   await expect(
     Reflect.apply(parser.parse, null, [
-      "tomorrow",
+      "sutra",
       { reference: context.reference },
     ]),
   ).rejects.toThrow("timeZone is required");
 });
 
 it("returns the requested dates and overnight range directly", async () => {
-  const result = await parser.parse("Sat Sun 1pm-8pm Mon 10pm-12am", context);
+  const result = await parser.parse(
+    "Sub Ned 1popodne-8popodne Pon 10popodne-12ujutru",
+    context,
+  );
   expect(result.occurrences).toEqual([
     {
       start: "2026-09-12T13:00:00+06:00",
@@ -77,11 +80,11 @@ it("returns the requested dates and overnight range directly", async () => {
 
 it("resolves the same language using the caller's local calendar", async () => {
   const reference = "2026-09-09T00:30:00+06:00";
-  const dhaka = await parser.parse("tomorrow at 3pm", {
+  const dhaka = await parser.parse("sutra u 3popodne", {
     reference,
     timeZone: "Asia/Dhaka",
   });
-  const newYork = await parser.parse("tomorrow at 3pm", {
+  const newYork = await parser.parse("sutra u 3popodne", {
     reference,
     timeZone: "America/New_York",
   });
@@ -90,7 +93,7 @@ it("resolves the same language using the caller's local calendar", async () => {
 });
 
 it("generates bounded recurrence and calendar rules", async () => {
-  const result = await parser.parse("every Monday at 8pm", {
+  const result = await parser.parse("svaki ponedeljak u 8popodne", {
     ...context,
     limit: 3,
   });
@@ -105,7 +108,7 @@ it("generates bounded recurrence and calendar rules", async () => {
 
 it("returns relative dates and duration windows in a batch", async () => {
   const results = await parser.parseMany(
-    ["one day after", "two hours"],
+    ["jedan dan posle", "dva sata"],
     context,
   );
   expect(results[0].occurrences[0].start).toBe("2026-09-10T12:00:00+06:00");
@@ -116,7 +119,7 @@ it("returns relative dates and duration windows in a batch", async () => {
 });
 
 it("returns diagnostics instead of dates for invalid clock values", async () => {
-  const result = await parser.parse("27pm", context);
+  const result = await parser.parse("27popodne", context);
   expect(result.occurrences).toEqual([]);
   expect(
     result.diagnostics.some((value) => value.code === "invalid-time"),

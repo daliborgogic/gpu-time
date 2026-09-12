@@ -1,7 +1,7 @@
 {
   "name": "gpu-time",
   "version": "0.1.0",
-  "description": "A compact neural parser for English schedules",
+  "description": "A compact neural parser for Serbian (Latin script) schedules",
   "author": "Arik Chakma",
   "type": "module",
   "main": "./dist/index.js",

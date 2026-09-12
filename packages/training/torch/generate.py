@@ -20,57 +20,79 @@ import natural
 
 ROOT = Path(__file__).resolve().parent.parent
 
-DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+DAYS = ["ponedeljak", "utorak", "sreda", "četvrtak", "petak", "subota", "nedelja"]
 MONTHS = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
+    "januar",
+    "februar",
+    "mart",
+    "april",
+    "maj",
+    "jun",
+    "jul",
+    "avgust",
+    "septembar",
+    "oktobar",
+    "novembar",
+    "decembar",
 ]
 NUMBERS = [
-    "zero",
-    "one",
-    "two",
-    "three",
-    "four",
-    "five",
-    "six",
-    "seven",
-    "eight",
-    "nine",
-    "ten",
-    "eleven",
-    "twelve",
+    "nula",
+    "jedan",
+    "dva",
+    "tri",
+    "četiri",
+    "pet",
+    "šest",
+    "sedam",
+    "osam",
+    "devet",
+    "deset",
+    "jedanaest",
+    "dvanaest",
 ]
-TENS = {20: "twenty", 30: "thirty", 40: "forty", 50: "fifty", 60: "sixty",
-        70: "seventy", 80: "eighty", 90: "ninety"}
-ORDINALS = ["first", "second", "third", "fourth", "fifth"]
+TENS = {
+    20: "dvadeset",
+    30: "trideset",
+    40: "četrdeset",
+    50: "pedeset",
+    60: "šezdeset",
+    70: "sedamdeset",
+    80: "osamdeset",
+    90: "devedeset",
+}
+ORDINALS = ["prvi", "drugi", "treći", "četvrti", "peti"]
 DAY_ORDINALS = [
-    "first", "second", "third", "fourth", "fifth", "sixth", "seventh",
-    "eighth", "ninth", "tenth", "eleventh", "twelfth", "thirteenth",
-    "fourteenth", "fifteenth", "sixteenth", "seventeenth", "eighteenth",
-    "nineteenth", "twentieth", "twenty-first", "twenty-second",
-    "twenty-third", "twenty-fourth", "twenty-fifth", "twenty-sixth",
-    "twenty-seventh", "twenty-eighth", "twenty-ninth", "thirtieth",
-    "thirty-first",
+    "prvi", "drugi", "treći", "četvrti", "peti", "šesti", "sedmi",
+    "osmi", "deveti", "deseti", "jedanaesti", "dvanaesti", "trinaesti",
+    "četrnaesti", "petnaesti", "šesnaesti", "sedamnaesti", "osamnaesti",
+    "devetnaesti", "dvadeseti", "dvadeset prvi", "dvadeset drugi",
+    "dvadeset treći", "dvadeset četvrti", "dvadeset peti", "dvadeset šesti",
+    "dvadeset sedmi", "dvadeset osmi", "dvadeset deveti", "trideseti",
+    "trideset prvi",
 ]
 HOLIDAYS = [
-    "Christmas",
-    "Christmas Eve",
-    "New Year's Day",
-    "New Year's Eve",
-    "Halloween",
-    "Valentine's Day",
+    "Božić",
+    "Badnje veče",
+    "Nova godina",
+    "Silvestrovo",
+    "Noć veštica",
+    "Valentinovo",
 ]
+# Internal Unit identifiers stay the TypeScript-facing English words; only the
+# surface text (via semantic.unit_form) is ever Serbian.
 UNITS = ["minute", "hour", "day", "week", "month", "year"]
+
+# Gendered surface forms for the three DEICTIC "flavors", so a modifier can
+# agree with whichever noun follows it (dan/mesec are masculine; nedelja/
+# sedmica/godina are feminine). "sledeca" (no ć) is the exact feminine key
+# already committed in lexicon.ts's modifiers map -- not a typo to "fix".
+DEICTIC_FORMS = {
+    "sledeći": {"m": "sledeći", "f": "sledeca", "n": "sledeće"},
+    "ovaj": {"m": "ovaj", "f": "ova", "n": "ovo"},
+    "prošli": {"m": "prošli", "f": "prošla", "n": "prošlo"},
+    "naredni": {"m": "naredni", "f": "naredna", "n": "naredno"},
+    "prethodni": {"m": "prethodni", "f": "prethodna", "n": "prethodno"},
+}
 
 
 class Sentence:
@@ -102,12 +124,10 @@ class Sentence:
         if label == "O" and self.in_expression:
             if (
                 self.augment
-                and text in ("the", "at", "on", "of")
+                and text in ("u", "na", "od")
                 and self.rng.random() < 0.3
             ):
                 return
-            if self.augment and text == "on the":
-                text = self.rng.choice(["on", "the", "on the"])
             label = "GLUE"
         if (
             self.augment
@@ -142,15 +162,23 @@ class Sentence:
         self.pending_clause = self.clauses > 0
         self.clauses += 1
 
-    def quantity(self, value: int | None = None, label: str = "NUM") -> int:
+    def quantity(
+        self, value: int | None = None, label: str = "NUM", gender: str = "m"
+    ) -> int:
         value = (
             value
             if value is not None
             else self.rng.choice([1, 2, 3, 4, 5, 6, 7, 10, 12, 15, 24, 30, 45, 90])
         )
-        text = (
-            NUMBERS[value] if value <= 12 and self.rng.random() < 0.35 else str(value)
-        )
+        spelled = value <= 12 and self.rng.random() < 0.35
+        if spelled and gender == "f" and value == 2:
+            text = "dve"
+        elif spelled and gender == "f" and value == 1:
+            text = "jedna"
+        elif spelled:
+            text = NUMBERS[value]
+        else:
+            text = str(value)
         self.add(text, label)
         return value
 
@@ -158,8 +186,6 @@ class Sentence:
         self,
         units: list[str] = UNITS,
         amount: int | None = None,
-        *,
-        allow_article: bool = True,
     ) -> None:
         name = self.rng.choice(units)
         amount = (
@@ -167,58 +193,52 @@ class Sentence:
             if amount is not None
             else self.rng.choice([1, 2, 3, 5, 7, 10, 12, 15, 30, 90])
         )
-        if allow_article and amount == 1 and self.rng.random() < 0.4:
-            self.add("an" if name == "hour" else "a", "NUM")
-        else:
-            self.quantity(amount)
-        self.add(name if amount == 1 else name + "s", "UNIT")
+        self.quantity(amount, gender=semantic.unit_gender(name))
+        self.add(semantic.unit_form(amount, name), "UNIT")
 
-    def day(self) -> None:
-        name = self.rng.choice(DAYS)
+    def day(self, name: str | None = None) -> str:
+        name = name if name is not None else self.rng.choice(DAYS)
         self.add(
-            self.rng.choice(
-                [name, name.lower(), name[:3], name[:3].lower(), name + "s"]
-            ),
+            self.rng.choice([name, name.lower(), name[:3], name[:3].lower()]),
             "WEEKDAY",
         )
         if self.rng.random() < 0.08:
             self.add(".", separator="")
+        return name
 
-    def days(self) -> None:
-        self.day()
+    def days(self, name: str | None = None) -> None:
+        name = self.day(name)
         if self.rng.random() < 0.45:
-            connector = self.rng.choice(["and", ",", "&", ""])
+            connector = self.rng.choice(["i", ",", "&", ""])
             if connector:
                 self.add(connector, "JOIN")
             self.day()
 
-    def ordinal(self, label: str = "ORD", day_of_month: bool = False) -> None:
+    def ordinal(
+        self, label: str = "ORD", day_of_month: bool = False, gender: str = "m"
+    ) -> None:
         value = self.rng.randint(1, 31 if day_of_month else 5)
         if not day_of_month and self.rng.random() < 0.55:
-            self.add(self.rng.choice(ORDINALS + ["last"]), label)
+            word = self.rng.choice(ORDINALS + ["poslednji"])
+            if gender == "f":
+                word = semantic.ordinal_feminine(word)
+            self.add(word, label)
             return
         if day_of_month and self.rng.random() < 0.3:
             word = DAY_ORDINALS[value - 1]
-            if "-" in word and self.rng.random() < 0.4:
-                word = word.replace("-", " ")
             self.add(word, label)
             return
-        suffix = (
-            "th"
-            if value % 100 in (11, 12, 13)
-            else {1: "st", 2: "nd", 3: "rd"}.get(value % 10, "th")
-        )
         self.add(str(value), label)
-        self.add(suffix, separator="")
+        self.add(".", separator="")
 
     def clock(self, style: int | None = None) -> None:
         style = self.rng.randrange(8) if style is None else style
         if style == 0:
-            self.add(self.rng.choice(["noon", "midnight", "midday"]), "TIME_NAMED")
+            self.add(self.rng.choice(["podne", "ponoć", "ponoc"]), "TIME_NAMED")
             return
         if style == 1:
             self.add(
-                self.rng.choice(["morning", "afternoon", "evening", "night"]), "DAYPART"
+                self.rng.choice(["jutro", "popodne", "veče", "noć"]), "DAYPART"
             )
             return
         meridiem = style in (2, 3, 4)
@@ -236,19 +256,21 @@ class Sentence:
             self.add(":", separator="")
             self.add(f"{self.rng.randint(0, 59):02d}", "SECOND", separator="")
         if meridiem:
-            marker = self.rng.choice(["am", "pm", "AM", "PM", "a.m.", "p.m."])
+            marker = self.rng.choice(
+                ["ujutru", "izjutra", "popodne", "uveče", "uvece", "noću", "nocu"]
+            )
             self.add(marker, "MERIDIEM", separator=self.rng.choice(["", " "]))
 
     def window(self, variant: int) -> None:
         if variant % 3 == 0:
-            self.add("from", "RANGE_START")
+            self.add("od", "RANGE_START")
         elif variant % 3 == 1:
-            self.add("between", "RANGE_START")
+            self.add("između", "RANGE_START")
         self.clock(self.rng.choice([2, 3, 5, 6, 7]))
         connector = (
-            "and"
+            "i"
             if variant % 3 == 1
-            else self.rng.choice(["-", "–", "to", "till", "through"])
+            else self.rng.choice(["-", "–", "do", "pre"])
         )
         self.add(
             connector, "RANGE_END", separator="" if connector in ("-", "–") else " "
@@ -258,8 +280,6 @@ class Sentence:
     def day_of_month(self, day: int, spoken: bool = False) -> None:
         if spoken or self.rng.random() < 0.3:
             word = DAY_ORDINALS[day - 1]
-            if "-" in word and self.rng.random() < 0.4:
-                word = word.replace("-", " ")
             self.add(word, "DOM")
             return
         self.add(str(day), "DOM")
@@ -274,7 +294,9 @@ class Sentence:
             self.add(f"{month:02d}", "MONTH", separator="")
             self.add("-", separator="")
             self.add(f"{day:02d}", "DOM", separator="")
-        elif variant % 3 == 1:
+        elif variant != 8:
+            # Day-before-month is the common Serbian prose order (matches the
+            # DMY default); month-first stays available as a minority style.
             self.day_of_month(day)
             self.add(
                 self.rng.choice([MONTHS[month - 1], MONTHS[month - 1][:3]]), "MONTH"
@@ -292,37 +314,47 @@ class Sentence:
 
     def recurrence(self, variant: int) -> None:
         if variant % 3 == 0:
-            self.add(self.rng.choice(["every", "each"]), "RECUR")
-            if self.rng.random() < 0.45:
-                self.add("other", "NUM")
-            self.days()
+            self.add(self.rng.choice(["svaki", "svako"]), "RECUR")
+            add_num = self.rng.random() < 0.45
+            if add_num:
+                name = self.rng.choice(DAYS)
+                self.add(
+                    semantic.two_word(semantic.weekday_gender(name), ordinal=True),
+                    "NUM",
+                )
+                self.days(name)
+            else:
+                self.days()
         elif variant % 3 == 1:
-            self.add("every", "RECUR")
-            self.quantity(self.rng.randint(1, 6))
-            self.add(
-                self.rng.choice(["hours", "days", "weeks", "months", "years"]), "UNIT"
+            self.add("svaki", "RECUR")
+            unit_id = self.rng.choice(
+                ["hour", "day", "week", "week_sedmica", "month", "year"]
             )
+            amount = self.quantity(
+                self.rng.randint(1, 6), gender=semantic.unit_gender(unit_id)
+            )
+            self.add(semantic.unit_form(amount, unit_id), "UNIT")
             if self.rng.random() < 0.5:
-                self.add("on")
+                self.add("u")
                 self.day()
         else:
             self.add(
                 self.rng.choice(
                     [
-                        "hourly",
-                        "daily",
-                        "weekly",
-                        "biweekly",
-                        "fortnightly",
-                        "monthly",
-                        "yearly",
-                        "annually",
+                        "dnevno",
+                        "svakodnevno",
+                        "nedeljno",
+                        "sedmično",
+                        "dvonedeljno",
+                        "petnaestodnevno",
+                        "mesečno",
+                        "godišnje",
                     ]
                 ),
                 "FREQ",
             )
         if self.rng.random() < 0.6:
-            self.add("at")
+            self.add("u")
             self.clock()
 
 
@@ -334,90 +366,93 @@ def render(family: int, variant: int, rng: random.Random) -> Sentence:
     if family == 0:  # A weekday list shares a clock or a window.
         if variant == 8:
             sentence.clock()
-            sentence.add(rng.choice([",", "on", "for", "—"]))
+            sentence.add(rng.choice([",", "na", "za", "—"]))
             sentence.days()
             return sentence
+        name = None
         if variant % 3 == 0:
+            name = rng.choice(DAYS)
+            flavor = rng.choice(["sledeći", "ovaj", "prošli", "naredni", "prethodni"])
             sentence.add(
-                rng.choice(["next", "this", "last", "coming", "previous"]), "DEICTIC"
+                DEICTIC_FORMS[flavor][semantic.weekday_gender(name)], "DEICTIC"
             )
-        sentence.days()
+        sentence.days(name)
         if rng.random() < 0.3:
             return sentence
         if variant % 2:
-            sentence.add(rng.choice(["at", "on"]))
+            sentence.add(rng.choice(["u", "na"]))
             sentence.clock()
         else:
             sentence.window(variant)
     elif family == 1:  # Relative quantity, with both prefix and suffix direction.
         if variant == 6:
             sentence.quantity_unit()
-            sentence.add("from", "DIR_AFTER")
-            sentence.add("now", "NOW")
+            sentence.add("od", "DIR_AFTER")
+            sentence.add("sada", "NOW")
             return sentence
         if variant == 8:
-            sentence.add("right")
-            sentence.add("after", "DIR_AFTER")
+            sentence.add("tačno")
+            sentence.add("posle", "DIR_AFTER")
             sentence.quantity_unit()
             return sentence
         if variant % 2:
-            sentence.add(rng.choice(["in", "after"]), "DIR_AFTER")
+            sentence.add(rng.choice(["za", "posle"]), "DIR_AFTER")
         sentence.quantity_unit()
         if variant % 2 == 0:
-            marker = rng.choice(["before", "ago", "earlier", "after", "later", "hence"])
+            marker = rng.choice(["pre", "unazad", "ranije", "posle", "kasnije", "otad"])
             sentence.add(
                 marker,
-                "DIR_BEFORE" if marker in ("before", "ago", "earlier") else "DIR_AFTER",
+                "DIR_BEFORE" if marker in ("pre", "unazad", "ranije") else "DIR_AFTER",
             )
     elif family == 2:  # Relative quantity anchored to a date, not the reference.
         if variant == 8:
-            sentence.add("before", "DIR_BEFORE")
+            sentence.add("pre", "DIR_BEFORE")
             sentence.date(0)
-            sentence.add("by")
-            sentence.quantity()
-            sentence.add("days", "UNIT")
+            sentence.add("za")
+            amount = sentence.quantity()
+            sentence.add(semantic.unit_form(amount, "day"), "UNIT")
             return sentence
         if variant in (0, 3):
-            sentence.add(rng.choice(["exactly", "precisely", "another", "more"]))
+            sentence.add(rng.choice(["tačno", "upravo", "još", "dodatnih"]))
         sentence.quantity_unit()
-        marker = rng.choice(["before", "after"])
-        sentence.add(marker, "DIR_BEFORE" if marker == "before" else "DIR_AFTER")
+        marker = rng.choice(["pre", "posle"])
+        sentence.add(marker, "DIR_BEFORE" if marker == "pre" else "DIR_AFTER")
         if variant % 3 == 0:
             sentence.add(rng.choice(HOLIDAYS), "HOLIDAY")
         elif variant % 3 == 1:
-            sentence.add(rng.choice(["today", "tomorrow", "yesterday"]), "REL_DAY")
-            sentence.add("at")
+            sentence.add(rng.choice(["danas", "sutra", "juče"]), "REL_DAY")
+            sentence.add("u")
             sentence.clock()
         else:
             sentence.day()
     elif family == 3:
         if variant in (6, 7):
             sentence.clock()
-            sentence.add("every", "RECUR")
+            sentence.add("svaki", "RECUR")
             sentence.days()
         elif variant == 8:
             sentence.days()
             sentence.clock()
-            sentence.add("weekly", "FREQ")
+            sentence.add("nedeljno", "FREQ")
         else:
             sentence.recurrence(variant)
     elif family == 4:
         sentence.date(variant)
         if rng.random() < 0.65:
-            sentence.add("at")
+            sentence.add("u")
             sentence.clock()
     elif family == 5:  # No connector is required between separately timed clauses.
         for clause in range(rng.randint(2, 3)):
             if clause:
-                connector = rng.choice(["and", ",", ";", "then", "", "and then"])
+                connector = rng.choice(["i", ",", ";", "zatim", "", "i zatim"])
                 if connector:
                     sentence.add(connector, "JOIN")
                 sentence.clause()
             if rng.random() < 0.25:
-                sentence.add("every", "RECUR")
+                sentence.add("svaki", "RECUR")
             if variant in (2, 6):
                 sentence.clock()
-                sentence.add(rng.choice(["—", ",", "for", "on", "at"]))
+                sentence.add(rng.choice(["—", ",", "za", "na", "u"]))
                 sentence.days()
                 continue
             sentence.days()
@@ -426,80 +461,81 @@ def render(family: int, variant: int, rng: random.Random) -> Sentence:
             else:
                 sentence.clock()
     elif family == 6:
-        sentence.add("the")
-        sentence.ordinal()
-        sentence.day()
-        sentence.add("of")
+        name = rng.choice(DAYS)
+        sentence.ordinal(gender=semantic.weekday_gender(name))
+        sentence.day(name)
+        sentence.add("od")
         if variant % 2:
-            sentence.add("every", "RECUR")
+            sentence.add("svaki", "RECUR")
         else:
-            sentence.add(rng.choice(["next", "this", "last"]), "DEICTIC")
-        sentence.add("month", "UNIT")
+            sentence.add(rng.choice(["sledeći", "ovaj", "prošli"]), "DEICTIC")
+        sentence.add("mesec", "UNIT")
     elif family == 7:
         if variant % 2:
             sentence.ordinal("DOM", day_of_month=True)
-            sentence.add("and")
+            sentence.add("i")
             sentence.ordinal("DOM", day_of_month=True)
-            sentence.add("of")
-            sentence.add(rng.choice(["each", "every"]), "RECUR")
-            sentence.add("month", "UNIT")
+            sentence.add("od")
+            sentence.add(rng.choice(["svako", "svaki"]), "RECUR")
+            sentence.add("mesec", "UNIT")
             return sentence
-        sentence.add("every", "RECUR")
-        sentence.add("month", "UNIT")
-        sentence.add("on the")
+        sentence.add("svaki", "RECUR")
+        sentence.add("mesec", "UNIT")
         sentence.ordinal("DOM", day_of_month=True)
         if rng.random() < 0.4:
-            sentence.add("and")
+            sentence.add("i")
             sentence.ordinal("DOM", day_of_month=True)
     elif family == 8:
         if variant == 8:
-            sentence.add("every", "RECUR")
+            sentence.add("svaki", "RECUR")
             sentence.add(rng.choice(MONTHS), "MONTH")
             sentence.ordinal("DOM", day_of_month=True)
             return sentence
-        sentence.add("every", "RECUR")
+        sentence.add("svaki", "RECUR")
         if variant % 2:
-            sentence.add("other", "NUM")
-        sentence.add("year", "UNIT")
-        sentence.add("on the")
+            sentence.add("druga", "NUM")
+        sentence.add("godina", "UNIT")
         sentence.ordinal("DOM", day_of_month=True)
-        sentence.add("of")
+        sentence.add("od")
         sentence.add(rng.choice(MONTHS), "MONTH")
     elif family == 9:
         if variant % 2:
             sentence.add(
-                rng.choice(["today", "tomorrow", "yesterday", "tonight"]), "REL_DAY"
+                rng.choice(["danas", "sutra", "juče", "večeras"]), "REL_DAY"
             )
         else:
             if rng.random() < 0.4:
-                sentence.add(rng.choice(["end", "start", "beginning"]), "EDGE")
-                sentence.add("of")
-            sentence.add(rng.choice(["next", "this", "last"]), "DEICTIC")
-            sentence.add(rng.choice(["week", "month", "year"]), "UNIT")
+                sentence.add(rng.choice(["kraj", "početak"]), "EDGE")
+                sentence.add("od")
+            flavor = rng.choice(["sledeći", "ovaj", "prošli"])
+            unit_id = rng.choice(["nedelja", "mesec", "godina"])
+            gender = "f" if unit_id in ("nedelja", "godina") else "m"
+            sentence.add(DEICTIC_FORMS[flavor][gender], "DEICTIC")
+            sentence.add(unit_id, "UNIT")
         if rng.random() < 0.6:
             sentence.clock()
     elif family == 10:
         sentence.recurrence(variant)
         if variant == 5:
-            sentence.add(rng.choice(["until", "through"]), "BOUND_END")
+            sentence.add(rng.choice(["do", "sve do"]), "BOUND_END")
             sentence.day()
             return sentence
         if variant in (2, 4, 6):
-            sentence.add(rng.choice(["until", "till", "through"]), "BOUND_END")
-            sentence.add("the")
-            sentence.add("end", "EDGE")
-            sentence.add("of the")
-            sentence.add(rng.choice(["week", "month", "year"]), "UNIT")
+            sentence.add(
+                rng.choice(["do", "sve do", "zaključno sa"]), "BOUND_END"
+            )
+            sentence.add("kraj", "EDGE")
+            sentence.add(rng.choice(["nedelja", "mesec", "godina"]), "UNIT")
             return sentence
-        sentence.add(rng.choice(["starting", "beginning", "from"]), "BOUND_START")
+        sentence.add(rng.choice(["od", "počev od", "počevši od"]), "BOUND_START")
         if variant % 2:
-            sentence.add("next", "DEICTIC")
-            sentence.add("week", "UNIT")
+            sentence.add("naredna", "DEICTIC")
+            sentence.add("nedelja", "UNIT")
         else:
             sentence.date(variant)
         if rng.random() < 0.5:
             sentence.add(
-                rng.choice(["until", "till", "through", "ending"]), "BOUND_END"
+                rng.choice(["do", "sve do", "zaključno sa", "do kraja"]), "BOUND_END"
             )
             sentence.add(rng.choice(MONTHS), "MONTH")
             if rng.random() < 0.5:
@@ -507,83 +543,84 @@ def render(family: int, variant: int, rng: random.Random) -> Sentence:
     elif family == 11:
         if variant == 8:
             sentence.quantity(rng.randint(1, 12))
-            sentence.add("more")
-            sentence.add("occurrences", "COUNT")
-            sentence.add("daily", "FREQ")
+            sentence.add("još")
+            sentence.add("puta", "COUNT")
+            sentence.add("dnevno", "FREQ")
             return sentence
         sentence.recurrence(variant)
         if variant % 2:
-            sentence.add("for")
+            sentence.add("za")
             sentence.quantity(rng.randint(1, 12))
-            sentence.add(rng.choice(["times", "occurrences"]), "COUNT")
+            sentence.add(rng.choice(["puta", "navrata"]), "COUNT")
         else:
-            sentence.add("for", "DUR")
-            sentence.quantity(rng.randint(1, 12))
-            sentence.add(rng.choice(["days", "weeks", "months"]), "UNIT")
+            sentence.add("za", "DUR")
+            unit_id = rng.choice(["day", "week", "week_sedmica", "month"])
+            amount = rng.randint(1, 12)
+            sentence.quantity(amount, gender=semantic.unit_gender(unit_id))
+            sentence.add(semantic.unit_form(amount, unit_id), "UNIT")
     elif family == 12:
         if variant == 8:
-            sentence.add("except", "EXCEPT")
+            sentence.add("osim", "EXCEPT")
             sentence.days()
-            sentence.add("daily", "FREQ")
+            sentence.add("dnevno", "FREQ")
             return sentence
-        sentence.add("every", "RECUR")
+        sentence.add("svaki", "RECUR")
         if rng.random() < 0.35:
-            sentence.add(rng.choice(["day", "days"]), "UNIT")
+            sentence.add(rng.choice(["dan", "dana"]), "UNIT")
         else:
             sentence.add(
-                rng.choice(["weekday", "weekdays", "weekend", "weekends", "workdays"]),
+                rng.choice(
+                    ["radni dan", "radni dani", "vikend", "vikendi", "radnim danima"]
+                ),
                 "DAYGROUP",
             )
-        sentence.add(rng.choice(["except", "excluding", "skip"]), "EXCEPT")
+        sentence.add(rng.choice(["osim", "izuzev", "sem"]), "EXCEPT")
         sentence.days()
     elif family == 13:
         if variant == 8:
-            sentence.add("at")
+            sentence.add("u")
             sentence.clock()
-            sentence.quantity()
-            sentence.add("hours", "UNIT")
-            sentence.add("long", "DUR")
+            amount = sentence.quantity()
+            sentence.add(semantic.unit_form(amount, "hour"), "UNIT")
+            sentence.add("trajanje", "DUR")
             return sentence
         if variant in (0, 3):
-            sentence.add(rng.choice(["starting", "beginning"]), "BOUND_START")
-            sentence.add("from", "RANGE_START")
-            sentence.add(rng.choice(["today", "tomorrow", "yesterday"]), "REL_DAY")
+            sentence.add(rng.choice(["od", "počev od"]), "BOUND_START")
+            sentence.add("od", "RANGE_START")
+            sentence.add(rng.choice(["danas", "sutra", "juče"]), "REL_DAY")
         elif variant not in (1, 4):
             sentence.clock()
-        sentence.add(rng.choice(["for", "lasting"]), "DUR")
+        sentence.add(rng.choice(["za", "trajanje"]), "DUR")
         if rng.random() < 0.5:
-            sentence.add("the")
-            sentence.add("next", "DEICTIC")
+            sentence.add(rng.choice(["sledeći", "naredni"]), "DEICTIC")
         sentence.quantity_unit()
     elif family == 14:
         if variant == 8:
-            sentence.add("weekly", "FREQ")
-            sentence.add(rng.choice(["once", "twice", "thrice"]), "TIMES")
+            sentence.add("nedeljno", "FREQ")
+            sentence.add(rng.choice(["jednom", "dvaput", "triput"]), "TIMES")
             return sentence
         if variant % 2:
-            sentence.add(rng.choice(["once", "twice", "thrice"]), "TIMES")
+            sentence.add(rng.choice(["jednom", "dvaput", "triput"]), "TIMES")
         else:
             sentence.quantity(rng.randint(2, 6))
-            sentence.add("times", "TIMES")
+            sentence.add("puta", "TIMES")
         if variant % 3 == 0:
-            sentence.add("per", "RECUR")
-        else:
-            sentence.add("a")
-        sentence.add(rng.choice(["day", "week"]), "UNIT")
+            sentence.add("na", "RECUR")
+        sentence.add(rng.choice(["dan", "nedelju"]), "UNIT")
     elif family == 15:
         if variant in (1, 3, 5):
             sentence.quantity(rng.randint(1, 28), "DOM")
             sentence.add(rng.choice(MONTHS), "MONTH")
-            sentence.add(rng.choice(["-", "–", "to", "through"]), "RANGE_END")
+            sentence.add(rng.choice(["-", "–", "do", "zaključno sa"]), "RANGE_END")
             sentence.quantity(rng.randint(1, 28), "DOM")
             sentence.add(rng.choice(MONTHS), "MONTH")
             return sentence
         sentence.add(rng.choice(MONTHS), "MONTH")
         if variant == 8:
-            sentence.add("between", "RANGE_START")
+            sentence.add("između", "RANGE_START")
         sentence.quantity(rng.randint(1, 14), "DOM")
         sentence.add(
-            "and" if variant == 8 else rng.choice(["-", "–", "through"]), "RANGE_END"
+            "i" if variant == 8 else rng.choice(["-", "–", "do"]), "RANGE_END"
         )
         sentence.quantity(rng.randint(15, 28), "DOM")
         if rng.random() < 0.5:
@@ -591,7 +628,7 @@ def render(family: int, variant: int, rng: random.Random) -> Sentence:
             sentence.add(str(rng.randint(2024, 2030)), "YEAR")
     elif family == 16:
         sentence.day()
-        sentence.add(rng.choice(["-", "through", "to"]), "RANGE_END")
+        sentence.add(rng.choice(["-", "do", "kroz"]), "RANGE_END")
         sentence.day()
         if rng.random() < 0.7:
             sentence.window(variant)
@@ -600,22 +637,25 @@ def render(family: int, variant: int, rng: random.Random) -> Sentence:
     elif family == 18:
         sentence.window(variant)
     elif family == 19:
-        sentence.add("in", "DIR_AFTER")
+        sentence.add("za", "DIR_AFTER")
         sentence.quantity(rng.randint(1, 5))
-        sentence.add("to", "RANGE_END")
-        sentence.quantity(rng.randint(6, 12))
-        sentence.add(rng.choice(["minutes", "hours", "days"]), "UNIT")
+        sentence.add("do", "RANGE_END")
+        unit_id = rng.choice(["minute", "hour", "day"])
+        amount = sentence.quantity(rng.randint(6, 12), gender=semantic.unit_gender(unit_id))
+        sentence.add(semantic.unit_form(amount, unit_id), "UNIT")
     elif family == 20:
-        sentence.add(rng.choice(["now", "immediately"]), "NOW")
+        sentence.add(rng.choice(["sada", "sad", "odmah"]), "NOW")
     elif family == 21:
-        sentence.add(rng.choice(["today", "tomorrow", "yesterday"]), "REL_DAY")
+        sentence.add(rng.choice(["danas", "sutra", "juče"]), "REL_DAY")
         if variant % 2:
-            sentence.add(rng.choice(["in the early", "in the late", "in the"]))
+            lead = rng.choice(["rano", "kasno", ""])
+            if lead:
+                sentence.add(lead)
         sentence.add(
-            rng.choice(["morning", "afternoon", "evening", "night"]), "DAYPART"
+            rng.choice(["jutro", "popodne", "veče", "noć"]), "DAYPART"
         )
     elif family == 22:
-        sentence.add("the day after tomorrow", "REL_DAY")
+        sentence.add("prekosutra", "REL_DAY")
     else:
         sentence = Sentence(rng)
         if rng.random() < 0.85:
@@ -623,27 +663,27 @@ def render(family: int, variant: int, rng: random.Random) -> Sentence:
             return sentence
         count = rng.randint(1, 99)
         year = rng.randint(1990, 2035)
-        name = rng.choice(["Sam", "Alex", "Jordan", "Riley", "Taylor", "May", "Casey"])
+        name = rng.choice(["Ana", "Marko", "Jovana", "Petar", "Milica", "Nikola", "Ivana"])
         sentence.add(
             rng.choice(
                 [
-                    "May I have your second opinion?",
-                    f"Please call {count} people in room {rng.randint(1, 40)}.",
-                    f"The last slide has {count} diagrams for {name}.",
-                    "We march together and may succeed.",
-                    f"The build has {year} errors and {count} warnings.",
-                    f"Please send the report to {name}.",
-                    "Our second attempt was the last one.",
-                    "A month is a unit in this glossary.",
-                    "From Alice to Bob, the message says hello.",
-                    f"This number is {count} and that one is {year}.",
+                    "Mogu li da čujem vaše drugo mišljenje?",
+                    f"Molim vas, pozovite {count} ljudi u sobi {rng.randint(1, 40)}.",
+                    f"Poslednji slajd ima {count} dijagrama za {name}.",
+                    "Marširamo zajedno i možemo uspeti.",
+                    f"Verzija {year} ima {count} grešaka i upozorenja.",
+                    f"Molim vas, pošaljite izveštaj {name}.",
+                    "Naš drugi pokušaj je bio poslednji.",
+                    "Mesec je jedinica u ovom rečniku.",
+                    "Od Ane do Petra, poruka kaže zdravo.",
+                    f"Ovaj broj je {count}, a onaj je {year}.",
                 ]
             )
         )
     return sentence
 
 
-TERSE_GROUPS = ["weekends", "weekend", "weekdays", "weekday"]
+TERSE_GROUPS = ["vikendi", "vikend", "radni dani", "radni dan"]
 
 
 def dash(sentence: Sentence, choices: list[str]) -> None:
@@ -651,7 +691,7 @@ def dash(sentence: Sentence, choices: list[str]) -> None:
     sentence.add(
         connector,
         "RANGE_END",
-        separator="" if connector in ("-", "\u2013") else " ",
+        separator="" if connector in ("-", "–") else " ",
     )
 
 
@@ -663,65 +703,72 @@ def terse(sentence: Sentence, variant: int) -> str:
         sentence.add(rng.choice(TERSE_GROUPS), "DAYGROUP")
     elif shape == 1:
         sentence.day()
-        dash(sentence, ["-", "\u2013", "to", "through"])
+        dash(sentence, ["-", "–", "do", "kroz"])
         sentence.day()
     elif shape == 2:
         name = MONTHS[rng.randint(1, 12) - 1]
         sentence.add(rng.choice([name, name[:3]]), "MONTH")
         first = rng.randint(1, 20)
         sentence.add(str(first), "DOM")
-        dash(sentence, ["-", "\u2013", "to"])
+        dash(sentence, ["-", "–", "do"])
         sentence.add(str(rng.randint(first + 1, 28)), "DOM")
     elif shape == 3:
         sentence.window(variant)
     elif shape == 4:
         sentence.window(variant)
         sentence.day()
-        dash(sentence, ["-", "\u2013", "to"])
+        dash(sentence, ["-", "–", "do"])
         sentence.day()
     elif shape == 5:
         day = rng.randint(1, 28)
         name = MONTHS[rng.randint(1, 12) - 1]
-        if rng.random() < 0.5:
-            sentence.add(rng.choice(["the", "on the"]))
+        if rng.random() < 0.8:  # day-first is the common Serbian prose order
             sentence.day_of_month(day, spoken=True)
-            sentence.add("of")
+            sentence.add("od")
             sentence.add(rng.choice([name, name[:3]]), "MONTH")
         else:
             sentence.add(rng.choice([name, name[:3]]), "MONTH")
             sentence.day_of_month(day, spoken=True)
     elif shape == 6:
-        sentence.add(rng.choice(["in", "for"]), "DIR_AFTER")
+        sentence.add(rng.choice(["za", "kroz"]), "DIR_AFTER")
         value = rng.choice([13, 15, 20, 21, 24, 25, 35, 40, 45])
         tens, ones = divmod(value, 10)
-        if tens >= 2:
-            spoken = TENS[tens * 10] + (
-                rng.choice([" ", "-"]) + NUMBERS[ones] if ones else ""
-            )
+        if tens >= 2 and ones:
+            joiner = rng.choice([" ", " i "])
+            spoken = TENS[tens * 10] + joiner + NUMBERS[ones]
+        elif tens >= 2:
+            spoken = TENS[tens * 10]
         else:
             spoken = NUMBERS[value] if value <= 12 else str(value)
         sentence.add(spoken, "NUM")
-        sentence.add(rng.choice(["minutes", "hours", "days"]), "UNIT")
+        unit_id = rng.choice(["minute", "hour", "day"])
+        sentence.add(semantic.unit_form(value, unit_id), "UNIT")
     else:
         pick = rng.randrange(4)
         if pick == 0:
             sentence.add(
-                rng.choice(
-                    ["the day before yesterday", "the day after tomorrow", "tmrw"]
-                ),
+                rng.choice(["prekjuče", "prekosutra", "juce"]),
                 "REL_DAY",
             )
         elif pick == 1:
-            sentence.add(rng.choice(["a few", "a couple of", "several"]), "NUM")
-            sentence.add(rng.choice(["days", "weeks", "hours"]), "UNIT")
-            sentence.add("ago", "DIR_BEFORE")
+            sentence.add(rng.choice(["par", "nekoliko"]), "NUM")
+            sentence.add(rng.choice(["dana", "nedelje", "sata"]), "UNIT")
+            sentence.add("unazad", "DIR_BEFORE")
         elif pick == 2:
-            sentence.add("in", "DIR_AFTER")
-            sentence.add(rng.choice(["a few", "a couple of"]), "NUM")
-            sentence.add(rng.choice(["days", "weeks", "hours"]), "UNIT")
+            sentence.add("za", "DIR_AFTER")
+            sentence.add(rng.choice(["par", "nekoliko"]), "NUM")
+            sentence.add(rng.choice(["dana", "nedelje", "sata"]), "UNIT")
         else:
-            sentence.add(rng.choice(["next", "this"]), "DEICTIC")
-            sentence.add(rng.choice(["wk", "week", "mo", "month"]), "UNIT")
+            unit_choice = rng.choice(["ned", "nedelja", "mes", "mesec"])
+            gender = "f" if unit_choice in ("ned", "nedelja") else "m"
+            flavor = rng.choice(["sledeći", "ovaj"])
+            deictic_word = (
+                {"sledeći": "sledeći", "ovaj": "ovaj"}[flavor]
+                if gender == "m"
+                else {"sledeći": "sledeca", "ovaj": "ova"}[flavor]
+            )
+            sentence.add(deictic_word, "DEICTIC")
+            sentence.add(unit_choice, "UNIT")
     return f"terse-{shape}"
 
 
@@ -732,31 +779,32 @@ def render_heldout(family: int, rng: random.Random) -> Sentence:
         sentence.add(background.prefix(rng))
     sentence.clause()
     if family == 0:
-        sentence.add("at")
+        sentence.add("u")
         sentence.clock()
-        sentence.add("on")
+        sentence.add("u")
         sentence.days()
     elif family == 1:
-        sentence.add("in", "DIR_AFTER")
-        sentence.add(rng.choice(["precisely", "exactly", "another"]))
-        sentence.quantity()
-        sentence.add(rng.choice(UNITS) + "s", "UNIT")
+        sentence.add("za", "DIR_AFTER")
+        sentence.add(rng.choice(["tačno", "upravo", "još"]))
+        unit_id = rng.choice(UNITS)
+        amount = sentence.quantity(gender=semantic.unit_gender(unit_id))
+        sentence.add(semantic.unit_form(amount, unit_id), "UNIT")
     elif family == 2:
-        sentence.add("before", "DIR_BEFORE")
+        sentence.add("pre", "DIR_BEFORE")
         sentence.add(rng.choice(HOLIDAYS), "HOLIDAY")
-        sentence.add("by")
-        sentence.quantity()
-        sentence.add("days", "UNIT")
+        sentence.add("za")
+        amount = sentence.quantity()
+        sentence.add(semantic.unit_form(amount, "day"), "UNIT")
     elif family == 3:
-        sentence.add("on")
+        sentence.add("u")
         sentence.days()
-        sentence.add("each", "RECUR")
-        sentence.add("week", "UNIT")
-        sentence.add("at")
+        sentence.add("svako", "RECUR")
+        sentence.add("nedelja", "UNIT")
+        sentence.add("u")
         sentence.clock()
     elif family == 4:
         sentence.ordinal("DOM", day_of_month=True)
-        sentence.add("of")
+        sentence.add("od")
         sentence.add(rng.choice(MONTHS), "MONTH")
         sentence.add(str(rng.randint(2024, 2035)), "YEAR")
     elif family == 5:
@@ -765,91 +813,90 @@ def render_heldout(family: int, rng: random.Random) -> Sentence:
                 sentence.add(";", "JOIN")
                 sentence.clause()
             sentence.clock(2)
-            sentence.add("on")
+            sentence.add("u")
             sentence.days()
     elif family == 6:
-        sentence.add("next", "DEICTIC")
-        sentence.add("month", "UNIT")
-        sentence.add("on its")
-        sentence.ordinal()
-        sentence.day()
+        sentence.add("sledeći", "DEICTIC")
+        sentence.add("mesec", "UNIT")
+        name = rng.choice(DAYS)
+        sentence.ordinal(gender=semantic.weekday_gender(name))
+        sentence.day(name)
     elif family == 7:
-        sentence.add("on the")
         sentence.ordinal("DOM", day_of_month=True)
-        sentence.add("and")
+        sentence.add("i")
         sentence.ordinal("DOM", day_of_month=True)
-        sentence.add("monthly", "FREQ")
+        sentence.add("mesečno", "FREQ")
     elif family == 8:
-        sentence.add("each", "RECUR")
+        sentence.add("svako", "RECUR")
         sentence.add(rng.choice(MONTHS), "MONTH")
         sentence.ordinal("DOM", day_of_month=True)
     elif family == 9:
         sentence.clock()
-        sentence.add("on")
-        sentence.add(rng.choice(["today", "tomorrow", "yesterday"]), "REL_DAY")
+        sentence.add("u")
+        sentence.add(rng.choice(["danas", "sutra", "juče"]), "REL_DAY")
     elif family == 10:
-        sentence.add("starting", "BOUND_START")
-        sentence.add("tomorrow", "REL_DAY")
-        sentence.add("weekly", "FREQ")
+        sentence.add("od", "BOUND_START")
+        sentence.add("sutra", "REL_DAY")
+        sentence.add("nedeljno", "FREQ")
     elif family == 11:
         sentence.quantity(rng.randint(1, 12))
-        sentence.add("more")
-        sentence.add("occurrences", "COUNT")
-        sentence.add("starting", "BOUND_START")
-        sentence.add("tomorrow", "REL_DAY")
-        sentence.add("weekly", "FREQ")
+        sentence.add("još")
+        sentence.add("puta", "COUNT")
+        sentence.add("od", "BOUND_START")
+        sentence.add("sutra", "REL_DAY")
+        sentence.add("nedeljno", "FREQ")
     elif family == 12:
-        sentence.add("excluding", "EXCEPT")
+        sentence.add("izuzev", "EXCEPT")
         sentence.day()
-        sentence.add("weekdays", "DAYGROUP")
-        sentence.add("at")
+        sentence.add("radni dani", "DAYGROUP")
+        sentence.add("u")
         sentence.clock()
     elif family == 13:
-        sentence.quantity()
-        sentence.add("hours", "UNIT")
-        sentence.add("long", "DUR")
-        sentence.add("at")
+        amount = sentence.quantity()
+        sentence.add(semantic.unit_form(amount, "hour"), "UNIT")
+        sentence.add("trajanje", "DUR")
+        sentence.add("u")
         sentence.clock()
     elif family == 14:
-        sentence.add("per", "RECUR")
-        sentence.add("week", "UNIT")
-        sentence.add(rng.choice(["once", "twice", "thrice"]), "TIMES")
+        sentence.add("na", "RECUR")
+        sentence.add("nedelju", "UNIT")
+        sentence.add(rng.choice(["jednom", "dvaput", "triput"]), "TIMES")
     elif family == 15:
         sentence.add(rng.choice(MONTHS), "MONTH")
-        sentence.add("from", "RANGE_START")
+        sentence.add("od", "RANGE_START")
         sentence.quantity(rng.randint(1, 14), "DOM")
-        sentence.add("to", "RANGE_END")
+        sentence.add("do", "RANGE_END")
         sentence.quantity(rng.randint(15, 28), "DOM")
     elif family == 16:
         sentence.window(2)
-        sentence.add("every", "RECUR")
+        sentence.add("svaki", "RECUR")
         sentence.day()
-        sentence.add("through", "RANGE_END")
+        sentence.add("do", "RANGE_END")
         sentence.day()
     elif family == 17:
-        sentence.add("at")
+        sentence.add("u")
         sentence.clock(2)
     elif family == 18:
-        sentence.add("between", "RANGE_START")
-        sentence.add(rng.choice(["noon", "midnight"]), "TIME_NAMED")
-        sentence.add("and", "RANGE_END")
+        sentence.add("između", "RANGE_START")
+        sentence.add(rng.choice(["podne", "ponoć"]), "TIME_NAMED")
+        sentence.add("i", "RANGE_END")
         sentence.clock(2)
     elif family == 19:
         sentence.quantity(rng.randint(1, 5))
-        sentence.add("to", "RANGE_END")
-        sentence.quantity(rng.randint(6, 12))
-        sentence.add("minutes", "UNIT")
-        sentence.add("later", "DIR_AFTER")
+        sentence.add("do", "RANGE_END")
+        amount = sentence.quantity(rng.randint(6, 12))
+        sentence.add(semantic.unit_form(amount, "minute"), "UNIT")
+        sentence.add("kasnije", "DIR_AFTER")
     elif family == 20:
-        sentence.add("right")
-        sentence.add("now", "NOW")
+        sentence.add("baš")
+        sentence.add("sada", "NOW")
     elif family == 21:
-        sentence.add("in the early")
-        sentence.add("morning", "DAYPART")
-        sentence.add("tomorrow", "REL_DAY")
+        sentence.add("rano")
+        sentence.add("jutro", "DAYPART")
+        sentence.add("sutra", "REL_DAY")
     elif family == 22:
-        sentence.add("the day after tomorrow", "REL_DAY")
-        sentence.add("at")
+        sentence.add("prekosutra", "REL_DAY")
+        sentence.add("u")
         sentence.clock()
     else:
         sentence = Sentence(rng)

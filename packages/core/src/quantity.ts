@@ -4,13 +4,6 @@ import type { Duration, PredictionToken as Token } from "./types.js";
 
 /** Read the numeric pieces selected by the model, preserving their source tokens. */
 export function readNumber(tokens: Token[], index: number, label = Role.NUM) {
-  // "a few" and "a couple" carry the article as its own number token.
-  if (
-    /^an?$/i.test(tokens[index]?.text ?? "") &&
-    tokens[index + 1]?.label === label &&
-    Number.isFinite(number(tokens[index + 1].text))
-  )
-    index += 1;
   let value = number(tokens[index]?.text ?? "");
   let next = index + 1;
   if (tokens[next]?.text === "." && tokens[next + 1]?.label === label) {
@@ -18,7 +11,7 @@ export function readNumber(tokens: Token[], index: number, label = Role.NUM) {
     next += 2;
   } else {
     if (tokens[next]?.text === "-" && tokens[next + 1]?.label === label) next++;
-    if (/^of$/i.test(tokens[next]?.text ?? "") && tokens[next]?.label === label)
+    if (/^i$/i.test(tokens[next]?.text ?? "") && tokens[next]?.label === label)
       next++;
     const suffix =
       tokens[next]?.label === label ? number(tokens[next].text) : NaN;
@@ -36,12 +29,17 @@ export function readDuration(
 ): { duration: Duration; next: number } | undefined {
   const components = [];
   let next = index;
-  while (tokens[next]?.label === Role.NUM) {
-    const quantity = readNumber(tokens, next);
+  while (
+    tokens[next]?.label === Role.NUM ||
+    tokens[next]?.label === Role.UNIT
+  ) {
+    // "sat i po" (an hour and a half): Serbian drops the leading "jedan" the
+    // way English implies one via the article "an".
+    const implicitOne = tokens[next]?.label === Role.UNIT;
+    const quantity = implicitOne
+      ? { value: 1, next }
+      : readNumber(tokens, next);
     next = quantity.next;
-    // "half an hour": the article belongs to the same quantity.
-    if (quantity.value < 1 && /^(a|an)$/i.test(tokens[next]?.text ?? ""))
-      next++;
     const durationUnit =
       tokens[next]?.label === Role.UNIT ? unit(tokens[next].text) : undefined;
     if (
@@ -52,12 +50,11 @@ export function readDuration(
       return;
     let amount = quantity.value;
     next++;
-    if (tokens[next]?.text.toLowerCase() === "and") {
-      let tail = next + 1;
-      if (/^(a|an)$/i.test(tokens[tail]?.text ?? "")) tail++;
+    if (tokens[next]?.text.toLowerCase() === "i") {
+      const tail = next + 1;
       if (
         tokens[tail]?.label === Role.NUM &&
-        tokens[tail].text.toLowerCase() === "half"
+        ["po", "pola"].includes(tokens[tail].text.toLowerCase())
       ) {
         amount += 0.5;
         next = tail + 1;
@@ -68,7 +65,7 @@ export function readDuration(
       return;
     components.push({ amount, unit: durationUnit });
     const candidate =
-      tokens[next]?.text.toLowerCase() === "and" ? next + 1 : next;
+      tokens[next]?.text.toLowerCase() === "i" ? next + 1 : next;
     if (tokens[candidate]?.label !== Role.NUM) break;
     const following = readNumber(tokens, candidate).next;
     if (tokens[following]?.label !== Role.UNIT) break;

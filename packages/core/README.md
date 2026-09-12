@@ -1,6 +1,6 @@
 # gpu-time
 
-A compact neural parser for English schedules. One small trained model reads a natural-language time expression and returns concrete dates, time ranges, and RFC 5545 recurrence rules. The public API returns dates and rules without internal token labels or syntax trees.
+A compact neural parser for Serbian (Latin script) schedules. One small trained model reads a natural-language time expression and returns concrete dates, time ranges, and RFC 5545 recurrence rules. The public API returns dates and rules without internal token labels or syntax trees.
 
 ```sh
 pnpm add gpu-time
@@ -9,7 +9,7 @@ pnpm add gpu-time
 ```js
 import { parse } from "gpu-time";
 
-const result = await parse("Sat Sun 1pm-8pm Mon 10pm-12am", {
+const result = await parse("Sub Ned 1popodne-8popodne Pon 10popodne-12ujutru", {
   reference: "2026-09-09T12:00:00+06:00",
   timeZone: "Asia/Dhaka",
 });

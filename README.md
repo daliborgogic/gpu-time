@@ -1,11 +1,11 @@
 # gpu-time
 
-`gpu-time` is an experimental neural parser for English time expressions. A small trained model helps turn text into dates, time ranges, and RFC 5545 recurrence rules. The parser runs locally on CPU or WebGPU and does not send your input to a server.
+`gpu-time` is an experimental neural parser for Serbian (Latin script) time expressions. A small trained model helps turn text into dates, time ranges, and RFC 5545 recurrence rules. The parser runs locally on CPU or WebGPU and does not send your input to a server.
 
 ```js
 import { parse } from "gpu-time";
 
-const result = await parse("Sat Sun 1pm-8pm Mon 10pm-12am", {
+const result = await parse("Sub Ned 1popodne-8popodne Pon 10popodne-12ujutru", {
   reference: "2026-09-09T12:00:00+06:00",
   timeZone: "Asia/Dhaka",
   limit: 12,

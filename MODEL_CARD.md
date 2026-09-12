@@ -10,9 +10,9 @@ Timezone is not a model role. TypeScript handles calendar arithmetic, daylight s
 
 ## Intended use
 
-The parser turns short English time expressions into dates, ranges, and recurrence rules on the client. Examples include reminder fields, schedule forms, and command bars.
+The parser turns short Serbian (Latin script) time expressions into dates, ranges, and recurrence rules on the client. Examples include reminder fields, schedule forms, and command bars.
 
-It is not suitable for parsing documents, extracting dates from long prose, legal or medical scheduling, billing, compliance, or any decision where a wrong or invented date has real consequences. It supports English only and has no language detection.
+It is not suitable for parsing documents, extracting dates from long prose, legal or medical scheduling, billing, compliance, or any decision where a wrong or invented date has real consequences. It supports Serbian (Latin script) only and has no language detection.
 
 ## Training data
 
@@ -44,9 +44,9 @@ The saved reports cover different model versions. Each result below describes it
 ## Limitations
 
 - Accuracy on real user phrasing is unmeasured. The generated expressions share training families, including those with reserved surrounding prose.
-- English only. Other languages can produce incorrect results without a diagnostic.
+- Serbian (Latin script) only. Other languages, and Serbian Cyrillic, can produce incorrect results without a diagnostic.
 - Vague expressions (`ASAP`, `after work`, `soon`) are deliberately given no clock value rather than a guessed one.
-- Ambiguous numeric dates depend on the caller's `dateOrder` (`MDY` by default). `03/04/2027` is ambiguous. `21/04/2016` is not and resolves correctly either way.
+- Ambiguous numeric dates depend on the caller's `dateOrder` (`DMY` by default). `03/04/2027` is ambiguous. `21/04/2016` is not and resolves correctly either way.
 - Complex recurring exception combinations preview correctly but can return an `unsupported-export` diagnostic when no single RFC 5545 rule represents them.
 - Quantization and browser GPU implementations can differ from the PyTorch reference unless parity is explicitly tested. It is, but only for the fixtures listed above.
 - WebGPU startup and dispatch overhead make small inputs slower than a CPU parser, which is why `auto` keeps them on the CPU.

@@ -63,7 +63,14 @@ function timeLikeNumber(text: string): boolean {
 
 const seen = new Set<string>();
 const kept: string[] = [];
-const dropped = { digits: 0, shape: 0, length: 0, timeWord: 0, duplicate: 0 };
+const dropped = {
+  digits: 0,
+  shape: 0,
+  script: 0,
+  length: 0,
+  timeWord: 0,
+  duplicate: 0,
+};
 let read = 0;
 
 const decompress = spawn("bunzip2", ["-dc", archive.pathname], {
@@ -74,10 +81,12 @@ for await (const line of createInterface({
   crlfDelay: Infinity,
 })) {
   const [, language, text] = line.split("\t");
-  if (language !== "eng" || !text) continue;
+  if (language !== "srp" || !text) continue;
   read++;
 
-  if (timeLikeNumber(text)) dropped.digits++;
+  // Serbian on Tatoeba is digraphic; this project targets Latin script only.
+  if (/[Ѐ-ӿ]/.test(text)) dropped.script++;
+  else if (timeLikeNumber(text)) dropped.digits++;
   else if (!/^\p{Lu}[\p{L}\p{M}\d ,.;:'"!?()-]*[.!?]$/u.test(text))
     dropped.shape++;
   else if (!withinLength(text)) dropped.length++;

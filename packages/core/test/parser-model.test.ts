@@ -3,13 +3,13 @@ import { defineParser, resolve } from "../src/schedule.js";
 import type { Clause } from "../src/types.js";
 
 it("preserves every clause when a schedule spans several inference windows", async () => {
-  const forms = ["Monday at 9am", "Tuesday at 10am", "Wednesday at 11am"];
+  const forms = ["ponedeljak u 9ujutru", "utorak u 10ujutru", "sreda u 11ujutru"];
   const days = ["MO", "TU", "WE"] as const;
   const clauses: Clause[] = Array.from({ length: 40 }, (_, index) => ({
     date: { kind: "weekday", days: [days[index % 3]] },
     time: { start: { hour: 9 + (index % 3), minute: 0 } },
   }));
-  const text = clauses.map((_, index) => forms[index % 3]).join(" and ");
+  const text = clauses.map((_, index) => forms[index % 3]).join(" i ");
   const parser = await defineParser({ backend: "cpu", tokens: true });
   try {
     const result = await parser.parse(text);
@@ -25,7 +25,7 @@ it("preserves every clause when a schedule spans several inference windows", asy
 it("resolves one timezone-free prediction using each caller's timezone", async () => {
   const parser = await defineParser({ backend: "cpu" });
   try {
-    const result = await parser.parse("tomorrow at 3pm");
+    const result = await parser.parse("sutra u 3popodne");
     const schedule = result.expressions[0].schedule!;
     expect(schedule).toEqual({
       clauses: [
@@ -55,7 +55,7 @@ it("resolves one timezone-free prediction using each caller's timezone", async (
 
 it("parses the user's shorthand using trained predictions, not oracle labels", async () => {
   const parser = await defineParser({ backend: "cpu", tokens: true });
-  const result = await parser.parse("Sat Sun 1pm-8pm Mon 10pm-12am");
+  const result = await parser.parse("Sub Ned 1popodne-8popodne Pon 10popodne-12ujutru");
   expect(result.expressions).toHaveLength(1);
   expect(result.expressions[0].schedule).toEqual({
     clauses: [
@@ -114,8 +114,8 @@ it("passes dateOrder through to AST assembly without changing neural token predi
 it("ignores boundary whitespace during inference while preserving every source token", async () => {
   const parser = await defineParser({ backend: "cpu", tokens: true });
   try {
-    const source = " \ttoday\n";
-    const plain = await parser.parse("today");
+    const source = " \tdanas\n";
+    const plain = await parser.parse("danas");
     const padded = await parser.parse(source);
     expect(padded.expressions[0].schedule).toEqual(
       plain.expressions[0].schedule,

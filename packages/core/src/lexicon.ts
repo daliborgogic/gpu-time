@@ -3,93 +3,136 @@ import type { DateSpec, Unit, Weekday } from "./types.js";
 export const weekdays: Weekday[] = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"];
 
 export const dayNames = [
-  "monday",
-  "tuesday",
-  "wednesday",
-  "thursday",
-  "friday",
-  "saturday",
-  "sunday",
+  "ponedeljak",
+  "utorak",
+  "sreda",
+  "četvrtak",
+  "petak",
+  "subota",
+  "nedelja",
 ];
 
 export const monthNames = [
-  "january",
-  "february",
-  "march",
+  "januar",
+  "februar",
+  "mart",
   "april",
-  "may",
-  "june",
-  "july",
-  "august",
-  "september",
-  "october",
-  "november",
-  "december",
+  "maj",
+  "jun",
+  "jul",
+  "avgust",
+  "septembar",
+  "oktobar",
+  "novembar",
+  "decembar",
+];
+
+// Genitive forms ("prva nedelja oktobra" = "first week of October") — the
+// case Serbian normally uses after another noun, not just the nominative.
+const monthGenitive = [
+  "januara",
+  "februara",
+  "marta",
+  "aprila",
+  "maja",
+  "juna",
+  "jula",
+  "avgusta",
+  "septembra",
+  "oktobra",
+  "novembra",
+  "decembra",
 ];
 
 export const quantities: Record<string, number> = {
-  zero: 0,
-  a: 1,
-  an: 1,
-  one: 1,
-  two: 2,
-  three: 3,
-  four: 4,
-  five: 5,
-  six: 6,
-  seven: 7,
-  eight: 8,
-  nine: 9,
-  ten: 10,
-  eleven: 11,
-  twelve: 12,
-  thirteen: 13,
-  fourteen: 14,
-  fifteen: 15,
-  sixteen: 16,
-  seventeen: 17,
-  eighteen: 18,
-  nineteen: 19,
-  twenty: 20,
-  thirty: 30,
-  forty: 40,
-  fifty: 50,
-  half: 0.5,
-  quarter: 0.25,
-  couple: 2,
-  few: 3,
-  several: 3,
-  other: 2,
-  once: 1,
-  twice: 2,
-  thrice: 3,
-  first: 1,
-  second: 2,
-  third: 3,
-  fourth: 4,
-  fifth: 5,
-  sixth: 6,
-  seventh: 7,
-  eighth: 8,
-  ninth: 9,
-  tenth: 10,
-  eleventh: 11,
-  twelfth: 12,
-  thirteenth: 13,
-  fourteenth: 14,
-  fifteenth: 15,
-  sixteenth: 16,
-  seventeenth: 17,
-  eighteenth: 18,
-  nineteenth: 19,
-  twentieth: 20,
-  thirtieth: 30,
-  last: -1,
+  nula: 0,
+  jedan: 1,
+  jedna: 1,
+  jedno: 1,
+  dva: 2,
+  dve: 2,
+  tri: 3,
+  četiri: 4,
+  pet: 5,
+  šest: 6,
+  sedam: 7,
+  osam: 8,
+  devet: 9,
+  deset: 10,
+  jedanaest: 11,
+  dvanaest: 12,
+  trinaest: 13,
+  četrnaest: 14,
+  petnaest: 15,
+  šesnaest: 16,
+  sedamnaest: 17,
+  osamnaest: 18,
+  devetnaest: 19,
+  dvadeset: 20,
+  trideset: 30,
+  četrdeset: 40,
+  pedeset: 50,
+  šezdeset: 60,
+  sedamdeset: 70,
+  osamdeset: 80,
+  devedeset: 90,
+  po: 0.5,
+  pola: 0.5,
+  četvrt: 0.25,
+  par: 2,
+  nekoliko: 3,
+  jednom: 1,
+  dvaput: 2,
+  triput: 3,
+  prvi: 1,
+  prva: 1,
+  prvo: 1,
+  drugi: 2,
+  druga: 2,
+  drugo: 2,
+  treći: 3,
+  treća: 3,
+  treće: 3,
+  četvrti: 4,
+  četvrta: 4,
+  četvrto: 4,
+  peti: 5,
+  peta: 5,
+  peto: 5,
+  šesti: 6,
+  sedmi: 7,
+  osmi: 8,
+  deveti: 9,
+  deseti: 10,
+  jedanaesti: 11,
+  dvanaesti: 12,
+  trinaesti: 13,
+  četrnaesti: 14,
+  petnaesti: 15,
+  šesnaesti: 16,
+  sedamnaesti: 17,
+  osamnaesti: 18,
+  devetnaesti: 19,
+  dvadeseti: 20,
+  trideseti: 30,
+  poslednji: -1,
+  poslednja: -1,
+  poslednje: -1,
 };
 
-// "twenty-first" reaches the compiler as three tokens, so the tens word and the
-// ones ordinal are combined rather than listed as thirty more entries.
-const tensWords: Record<string, number> = { twenty: 20, thirty: 30 };
+// "dvadeset prvi" (twenty-first) reaches the compiler as two tokens, so the
+// tens word and the ones ordinal are combined rather than listed as thirty
+// more entries.
+const tensWords: Record<string, number> = {
+  dvadeset: 20,
+  trideset: 30,
+  četrdeset: 40,
+  pedeset: 50,
+  šezdeset: 60,
+  sedamdeset: 70,
+  osamdeset: 80,
+  devedeset: 90,
+};
 
 export function compoundOrdinal(tens: string, ones: string): number {
   const base = tensWords[tens.toLowerCase()];
@@ -98,22 +141,53 @@ export function compoundOrdinal(tens: string, ones: string): number {
     return NaN;
   return base + unit;
 }
-const unitNames = ["minute", "hour", "day", "week", "month", "year"] as const;
-const unitAbbreviations: Record<string, Unit> = {
+
+const unitWords: Record<string, Unit> = {
+  minut: "minute",
+  minuta: "minute",
+  minute: "minute",
+  minutu: "minute",
+  minuti: "minute",
+  minutima: "minute",
   min: "minute",
-  mins: "minute",
-  hr: "hour",
-  hrs: "hour",
-  wk: "week",
-  wks: "week",
-  week: "week",
-  weeks: "week",
-  d: "day",
   m: "minute",
+  sat: "hour",
+  sata: "hour",
+  satu: "hour",
+  sati: "hour",
+  satima: "hour",
   h: "hour",
+  dan: "day",
+  dana: "day",
+  danu: "day",
+  dani: "day",
+  danima: "day",
+  d: "day",
+  nedelja: "week",
+  nedelje: "week",
+  nedelji: "week",
+  nedelju: "week",
+  sedmica: "week",
+  sedmice: "week",
+  sedmici: "week",
+  sedmicu: "week",
+  sedmicama: "week",
+  ned: "week",
+  sed: "week",
+  mesec: "month",
+  meseca: "month",
+  mesecu: "month",
+  meseci: "month",
+  mesecima: "month",
+  mes: "month",
   mo: "month",
-  yr: "year",
-  yrs: "year",
+  godina: "year",
+  godine: "year",
+  godini: "year",
+  godinu: "year",
+  godinama: "year",
+  god: "year",
+  g: "year",
 };
 
 export function number(text: string): number {
@@ -126,46 +200,45 @@ export function number(text: string): number {
 }
 
 export function weekday(text: string): Weekday | undefined {
-  const word = text.toLowerCase().replace(/\.$/, "").replace(/s$/, "");
-  const index = dayNames.findIndex((name) => {
-    if (name === word || name.slice(0, 3) === word) return true;
-    return name === "thursday" && ["thur", "thurs"].includes(word);
-  });
+  const word = text.toLowerCase().replace(/\.$/, "");
+  const index = dayNames.findIndex(
+    (name) => name === word || name.slice(0, 3) === word,
+  );
 
   return weekdays[index];
 }
 
 export function month(text: string): number | undefined {
   const word = text.toLowerCase().replace(/\.$/, "");
-  const index = monthNames.findIndex((name) => {
-    if (name === word || name.slice(0, 3) === word) return true;
-    return name === "september" && word === "sept";
-  });
+  const index = monthNames.findIndex(
+    (name, position) =>
+      name === word ||
+      name.slice(0, 3) === word ||
+      monthGenitive[position] === word,
+  );
 
   return index < 0 ? undefined : index + 1;
 }
 
 export function unit(text: string): Unit | undefined {
   const word = text.toLowerCase();
-  const abbreviation = Object.hasOwn(unitAbbreviations, word)
-    ? unitAbbreviations[word]
-    : undefined;
-  if (abbreviation !== undefined) return abbreviation;
-
-  const singular = word.replace(/s$/, "");
-  return unitNames.find((name) => name === singular);
+  return Object.hasOwn(unitWords, word) ? unitWords[word] : undefined;
 }
 
 export const holidayNames: Record<
   string,
   Extract<DateSpec, { kind: "holiday" }>["name"]
 > = {
-  christmas: "christmas",
-  christmaseve: "christmas-eve",
-  newyear: "new-year",
-  newyearsday: "new-year",
-  newyearseve: "new-years-eve",
-  halloween: "halloween",
-  valentinesday: "valentines",
-  valentines: "valentines",
+  božić: "christmas",
+  badnjidan: "christmas-eve",
+  badnjeveče: "christmas-eve",
+  novagodina: "new-year",
+  novogodišnjidan: "new-year",
+  silvestrovo: "new-years-eve",
+  novogodišnjanoć: "new-years-eve",
+  noćveštica: "halloween",
+  helovin: "halloween",
+  haloween: "halloween",
+  valentinovo: "valentines",
+  danzaljubljenih: "valentines",
 };

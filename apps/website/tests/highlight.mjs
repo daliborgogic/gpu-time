@@ -10,7 +10,7 @@ const marked = (text) =>
 // alignment with the input it sits behind.
 for (const { text } of [
   ...examples,
-  { text: "Every Monday from 8pm to 10pm" },
+  { text: "svaki ponedeljak od 8popodne do 10popodne" },
   { text: "" },
   { text: "gibberish" },
 ]) {
@@ -23,19 +23,19 @@ for (const { text } of [
   );
 }
 
-assert.deepEqual(marked("Every Monday from 8pm to 10pm"), [
-  "repeat:Every",
-  "date:Monday",
-  "time:from 8pm to 10pm",
+assert.deepEqual(marked("svaki ponedeljak od 8popodne do 10popodne"), [
+  "repeat:svaki",
+  "date:ponedeljak",
+  "time:od 8popodne do 10popodne",
 ]);
-assert.deepEqual(marked("every other Friday at noon"), [
-  "repeat:every other",
-  "date:Friday",
-  "time:noon",
+assert.deepEqual(marked("svaki drugi petak u podne"), [
+  "repeat:svaki drugi",
+  "date:petak",
+  "time:podne",
 ]);
-assert.deepEqual(marked("in half an hour for 45 minutes"), [
-  "duration:in half an hour",
-  "duration:for 45 minutes",
+assert.deepEqual(marked("za pola sata za 45 minuta"), [
+  "duration:za pola sata",
+  "duration:za 45 minuta",
 ]);
 assert.deepEqual(marked("gibberish"), []);
 console.log("highlight: parts reassemble and carry the expected meanings");

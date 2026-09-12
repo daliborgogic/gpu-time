@@ -32,18 +32,14 @@ import {
 import { readDuration, readNumber } from "./quantity.js";
 
 const filler = new Set([
-  "at",
-  "on",
-  "the",
-  "of",
-  "a",
-  "an",
-  "and",
-  "then",
-  "from",
-  "for",
-  "end",
-  "start",
+  "u",
+  "na",
+  "od",
+  "i",
+  "zatim",
+  "za",
+  "kraj",
+  "početak",
   ",",
   ";",
   "&",
@@ -52,27 +48,33 @@ const filler = new Set([
   "–",
   "—",
   ".",
-  "st",
-  "nd",
-  "rd",
-  "th",
 ]);
 const relativeDays: Record<string, number> = {
-  today: 0,
-  tonight: 0,
-  tomorrow: 1,
-  yesterday: -1,
-  "the day after tomorrow": 2,
-  "the day before yesterday": -2,
-  tmrw: 1,
-  tmr: 1,
-  tonite: 0,
+  danas: 0,
+  večeras: 0,
+  veceras: 0,
+  noćas: 0,
+  sutra: 1,
+  juče: -1,
+  jučer: -1,
+  juce: -1,
+  prekosutra: 2,
+  prekjuče: -2,
+  prekjuce: -2,
 };
 const dayParts: Record<string, DayPart> = {
-  morning: "morning",
-  afternoon: "afternoon",
-  evening: "evening",
-  night: "night",
+  jutro: "morning",
+  ujutru: "morning",
+  izjutra: "morning",
+  popodne: "afternoon",
+  veče: "evening",
+  vece: "evening",
+  uveče: "evening",
+  uvece: "evening",
+  noć: "night",
+  noc: "night",
+  noću: "night",
+  nocu: "night",
 };
 const recurrenceBounds = new Set([
   Role.BOUND_START,
@@ -80,13 +82,22 @@ const recurrenceBounds = new Set([
   Role.EXCEPT,
 ]);
 const modifiers: Record<string, Modifier> = {
-  this: "this",
-  next: "next",
-  coming: "next",
-  upcoming: "next",
-  last: "last",
-  previous: "last",
-  past: "last",
+  ovaj: "this",
+  ova: "this",
+  ovo: "this",
+  sledeći: "next",
+  sledeca: "next",
+  sledeće: "next",
+  naredni: "next",
+  naredna: "next",
+  naredno: "next",
+  prošli: "last",
+  prošla: "last",
+  prošlo: "last",
+  proslim: "last",
+  prethodni: "last",
+  prethodna: "last",
+  prethodno: "last",
 };
 
 const unitFrequencies: Partial<Record<Unit, Recurrence["freq"]>> = {
@@ -97,14 +108,17 @@ const unitFrequencies: Partial<Record<Unit, Recurrence["freq"]>> = {
   year: "yearly",
 };
 const frequencyWords: Record<string, Recurrence["freq"]> = {
-  hourly: "hourly",
-  daily: "daily",
-  weekly: "weekly",
-  biweekly: "weekly",
-  fortnightly: "weekly",
-  monthly: "monthly",
-  yearly: "yearly",
-  annually: "yearly",
+  dnevno: "daily",
+  svakodnevno: "daily",
+  nedeljno: "weekly",
+  sedmično: "weekly",
+  sedmicno: "weekly",
+  dvonedeljno: "weekly",
+  petnaestodnevno: "weekly",
+  mesečno: "monthly",
+  mesecno: "monthly",
+  godišnje: "yearly",
+  godisnje: "yearly",
 };
 
 function frequencyFor(token: Token): Recurrence["freq"] {
@@ -146,14 +160,13 @@ function fail(token: Token, code: string, message: string): never {
 }
 
 const clockPeriods = new Map([
-  ["inmorning", "am"],
-  ["inthemorning", "am"],
-  ["inafternoon", "pm"],
-  ["intheafternoon", "pm"],
-  ["inevening", "pm"],
-  ["intheevening", "pm"],
-  ["atnight", "pm"],
-  ["inthenight", "pm"],
+  ["ujutru", "am"],
+  ["izjutra", "am"],
+  ["popodne", "pm"],
+  ["uveče", "pm"],
+  ["uvece", "pm"],
+  ["noću", "pm"],
+  ["nocu", "pm"],
 ]);
 
 function readClock(
@@ -168,16 +181,36 @@ function readClock(
   let hasMinutes = false;
   let next = index + 1;
 
+  // "pet i petnaest" (five and fifteen) reads the minutes past the hour;
+  // the conjunction is otherwise meaningless glue at this position. "po"/
+  // "pola" (half) reads the same way but is often tagged NUM rather than
+  // MINUTE, since it is a plain quantity everywhere else.
+  const isHalfWord = (t: Token | undefined) =>
+    !!t && ["po", "pola"].includes(t.text.toLowerCase());
+  if (
+    tokens[next]?.text.toLowerCase() === "i" &&
+    (tokens[next + 1]?.label === Role.MINUTE || isHalfWord(tokens[next + 1]))
+  ) {
+    next++;
+  }
+
   if (tokens[next]?.text === ":" && tokens[next + 1]?.label === Role.MINUTE) {
     minute = number(tokens[next + 1].text);
     hasMinutes = true;
     next += 2;
   }
 
-  if (tokens[next]?.label === Role.MINUTE) {
-    const spoken = readNumber(tokens, next, Role.MINUTE);
-    minute = spoken.value;
-    next = spoken.next;
+  if (tokens[next]?.label === Role.MINUTE || isHalfWord(tokens[next])) {
+    // "sedam i po" (seven and a half) means half past the hour, thirty
+    // minutes, not the literal quantity 0.5 that "po" resolves to elsewhere.
+    if (isHalfWord(tokens[next])) {
+      minute = 30;
+      next++;
+    } else {
+      const spoken = readNumber(tokens, next, Role.MINUTE);
+      minute = spoken.value;
+      next = spoken.next;
+    }
     hasMinutes = true;
   }
 
@@ -192,11 +225,7 @@ function readClock(
     next++;
   }
   if (meridiem) {
-    meridiem = meridiem.replace(/[’]/g, "'").replace(/^oclock/, "o'clock");
-    if (meridiem.startsWith("o'clock") && meridiem.length > 7)
-      meridiem = meridiem.slice(7);
-    if (hour === 12 && ["atnight", "inthenight"].includes(meridiem))
-      meridiem = "am";
+    if (hour === 12 && ["noću", "nocu"].includes(meridiem)) meridiem = "am";
     meridiem = clockPeriods.get(meridiem) ?? meridiem;
   }
 
@@ -206,8 +235,7 @@ function readClock(
     second !== undefined &&
     (!Number.isInteger(second) || second < 0 || second > 59);
   const invalidMeridiem =
-    meridiem &&
-    (!["am", "pm", "o'clock"].includes(meridiem) || hour < 1 || hour > 12);
+    meridiem && (!["am", "pm"].includes(meridiem) || hour < 1 || hour > 12);
 
   if (invalidHour || invalidMinute || invalidSecond || invalidMeridiem) {
     fail(token, "invalid-time", "Clock components are out of range.");
@@ -399,13 +427,13 @@ function compileDateAndTime(
       }
 
       case Role.EDGE:
-        if (!["start", "beginning", "end"].includes(word))
+        if (!["početak", "kraj"].includes(word))
           fail(token, "unsupported", "Unknown calendar edge.");
-        edge = word === "end" ? "end" : "start";
+        edge = word === "kraj" ? "end" : "start";
         break;
 
       case Role.NOW:
-        if (!["now", "immediately"].includes(word))
+        if (!["sada", "sad", "odmah"].includes(word))
           fail(token, "unsupported", "Unknown immediate-time expression.");
         clause.date = { kind: "now" };
         break;
@@ -420,7 +448,7 @@ function compileDateAndTime(
         if (!value) fail(token, "unsupported", "Unknown calendar unit.");
         const boundary =
           edge ??
-          (tokens.some((part) => part.text.toLowerCase() === "end")
+          (tokens.some((part) => part.text.toLowerCase() === "kraj")
             ? "end"
             : undefined);
         if (ordinal !== undefined && value === "week") {
@@ -456,9 +484,12 @@ function compileDateAndTime(
         break;
 
       case Role.DAYGROUP: {
-        const group = /^(weekend|weekends)$/.test(word)
+        let text = word;
+        while (tokens[index + 1]?.label === Role.DAYGROUP)
+          text += tokens[++index].text.toLowerCase();
+        const group = /^(vikend|vikendi|vikendom)$/.test(text)
           ? "weekend"
-          : /^(weekday|weekdays|workday|workdays)$/.test(word)
+          : /^(radnidan|radnidani|radnimdanima|radnadana)$/.test(text)
             ? "weekday"
             : undefined;
         if (!group) fail(token, "unsupported", "Unknown day group.");
@@ -471,14 +502,20 @@ function compileDateAndTime(
       }
 
       case Role.CLOCK_OFFSET: {
-        const offset = word === "half" ? 30 : word === "quarter" ? 15 : NaN;
+        // Serbian only expresses this as "to the hour" ("petnaest do šest");
+        // "past the hour" reads as an ordinary spoken minute in readClock.
+        const offset = ["pola", "po"].includes(word)
+          ? 30
+          : word === "četvrt"
+            ? 15
+            : NaN;
         let target = index + 1;
         const direction = tokens[target]?.text.toLowerCase();
-        if (!["past", "to"].includes(direction) || !Number.isFinite(offset))
+        if (!["do", "pre"].includes(direction) || !Number.isFinite(offset))
           fail(
             token,
             "invalid-time",
-            "A fractional clock needs past or to and an hour.",
+            "A fractional clock needs do or pre and an hour.",
           );
         target++;
         if (tokens[target]?.label !== Role.HOUR)
@@ -486,11 +523,7 @@ function compileDateAndTime(
         const { clock, next } = readClock(tokens, target);
         if (!("hour" in clock.value) || clock.value.minute !== 0)
           fail(token, "invalid-time", "A fractional clock needs a whole hour.");
-        const total =
-          (clock.value.hour * 60 +
-            (direction === "to" ? -offset : offset) +
-            1440) %
-          1440;
+        const total = (clock.value.hour * 60 - offset + 1440) % 1440;
         clock.value = { hour: Math.floor(total / 60), minute: total % 60 };
         clocks.push(clock);
         index = next - 1;
@@ -498,10 +531,12 @@ function compileDateAndTime(
       }
 
       case Role.TIME_NAMED:
-        if (!["noon", "midday", "midnight"].includes(word))
+        if (!["podne", "ponoć", "ponoc"].includes(word))
           fail(token, "unsupported", "Unknown named clock time.");
         clocks.push({
-          value: { named: word === "midnight" ? "midnight" : "noon" },
+          value: {
+            named: ["ponoć", "ponoc"].includes(word) ? "midnight" : "noon",
+          },
           token,
           needsMeridiem: false,
         });
@@ -532,9 +567,12 @@ function compileDateAndTime(
 
       case Role.DOM: {
         let value = number(word);
-        // "twenty-first" arrives as separate tokens, optionally hyphenated.
+        // "dvadeset prvi" (twenty-first) arrives as separate tokens, with an
+        // optional "i" between the tens word and the ones ordinal.
         const onesIndex =
-          tokens[index + 1]?.text === "-" ? index + 2 : index + 1;
+          tokens[index + 1]?.text.toLowerCase() === "i"
+            ? index + 2
+            : index + 1;
         const ones = tokens[onesIndex];
         if (ones) {
           const combined = compoundOrdinal(word, ones.text);
@@ -595,8 +633,8 @@ function compileDateAndTime(
       }
 
       case Role.MERIDIEM:
-        // "at" introduces a following clock; it is also part of "at night".
-        if (word === "at" && tokens[index + 1]?.label === Role.HOUR) break;
+        // "u" introduces a following clock; it is also part of "u noć".
+        if (word === "u" && tokens[index + 1]?.label === Role.HOUR) break;
         fail(token, "invalid-time", "A time-of-day qualifier needs a clock.");
 
       case Role.HOUR: {
@@ -842,7 +880,7 @@ function compileClause(input: Token[], diagnostics: Diagnostic[]): Clause {
   const last = input.findLast((token) => token.label !== Role.O);
   if (last?.label === Role.RANGE_END) {
     if (
-      last.text.toLowerCase() === "until" &&
+      last.text.toLowerCase() === "do" &&
       input.some((token) =>
         [Role.RECUR, Role.FREQ, Role.DAYGROUP].includes(token.label),
       )
@@ -901,7 +939,7 @@ function compileClause(input: Token[], diagnostics: Diagnostic[]): Clause {
       recurrence = {
         ...recurrence,
         freq: frequencyWords[word],
-        interval: ["biweekly", "fortnightly"].includes(word)
+        interval: ["dvonedeljno", "petnaestodnevno"].includes(word)
           ? 2
           : (recurrence?.interval ?? 1),
       };
@@ -1001,7 +1039,7 @@ function compileClause(input: Token[], diagnostics: Diagnostic[]): Clause {
       if (
         recurrence &&
         !["minute", "hour"].includes(durationUnit) &&
-        token.text.toLowerCase() !== "lasting"
+        token.text.toLowerCase() !== "trajanje"
       ) {
         if (recurrence.span)
           fail(
@@ -1221,9 +1259,12 @@ function compileGroup(tokens: Token[], diagnostics: Diagnostic[]): Clause[] {
     for (let index = 0; index < tokens.length; index++) {
       const token = tokens[index];
       if (
-        ["and", ",", "&"].includes(token.text.toLowerCase()) &&
+        ["i", ",", "&"].includes(token.text.toLowerCase()) &&
         groups.at(-1)!.some(isClock) &&
-        isClock(tokens[index + 1] ?? token)
+        isClock(tokens[index + 1] ?? token) &&
+        // "sedam i po" (seven and a half) is one clock, not two; "po"/"pola"
+        // read as minutes past the preceding hour rather than a new point.
+        !["po", "pola"].includes(tokens[index + 1]?.text.toLowerCase() ?? "")
       ) {
         groups.push([]);
       } else groups.at(-1)!.push(token);
@@ -1256,9 +1297,7 @@ function compileExpression(text: string, tokens: Token[]): Expression {
             (token) =>
               token.label !== Role.GLUE ||
               token.kind === 2 ||
-              ["past", "to", "and", "a", "an"].includes(
-                token.text.toLowerCase(),
-              ),
+              ["do", "pre", "i"].includes(token.text.toLowerCase()),
           )
           .map((token) =>
             token.label === Role.GLUE || token.label === Role.JOIN
@@ -1347,7 +1386,7 @@ export function compilePredictions(
   return splitExpressions(tokens).map((expression) =>
     compileExpression(
       text,
-      numericDateOrder(expression, options.dateOrder ?? "MDY"),
+      numericDateOrder(expression, options.dateOrder ?? "DMY"),
     ),
   );
 }

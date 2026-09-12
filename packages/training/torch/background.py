@@ -4,32 +4,34 @@ import random
 from functools import lru_cache
 from pathlib import Path
 
-CONNECTORS = frozenset({"at", "on", "of", "for", "about", "to", "from", "in"})
+# The genuine preposition subset of compile.ts's filler set (u/na/od/za) --
+# mirrors what can actually collide as a double-preposition glue artifact.
+CONNECTORS = frozenset({"u", "na", "od", "za"})
 
 PROSE = Path(__file__).resolve().parent.parent / "data/prose/sentences.txt"
 RESERVED: set[str] = set()
 
-ACTORS = ["I", "we", "you", "they"]
-MODALS = ["'ll", " will", " may", " might", " should"]
-STATES = ["be out", "be back", "be available", "go back"]
-PLACES = ["the office", "our clinic", "the store", "the library"]
-OPENINGS = ["is open", "is closed", "opens", "closes"]
-DETERMINERS = ["the", "our", "my"]
-EVENTS = ["meeting", "appointment", "interview", "call", "lesson"]
-PREDICATES = ["is", "starts", "is scheduled"]
-LEADS = ["", "please", "could you", "can you", "I'd like to"]
+ACTORS = ["ja", "mi", "ti", "oni"]
+MODALS = ["ću", "ćemo", "možda", "trebalo bi da"]
+STATES = ["biti odsutan", "biti ovde", "biti dostupan", "vratiti se"]
+PLACES = ["kancelarija", "naša klinika", "prodavnica", "biblioteka"]
+OPENINGS = ["je otvorena", "je zatvorena", "se otvara", "se zatvara"]
+DETERMINERS = ["", "naš", "moj"]
+EVENTS = ["sastanak", "termin", "intervju", "poziv", "čas"]
+PREDICATES = ["je", "počinje", "je zakazan"]
+LEADS = ["", "molim vas", "možete li", "da li možete", "želeo bih da"]
 ASKS = [
-    "schedule a {event}",
-    "book a {event}",
-    "reserve the {event}",
-    "book room {room}",
-    "set an alarm",
-    "remind me",
-    "remind me to call {name}",
+    "zakažite {event}",
+    "rezervišite {event}",
+    "potvrdite {event}",
+    "rezervišite sobu {room}",
+    "podesite alarm",
+    "podsetite me",
+    "podsetite me da pozovem {name}",
 ]
-NAMES = ["May", "Alex", "Jordan", "Riley", "Sam", "Taylor", "Casey"]
-ASIDES = ["", "", "", "please,", "note:", "could you check this:"]
-RECIPIENTS = ["me", "us", "the team"] + NAMES
+NAMES = ["Ana", "Marko", "Jovana", "Petar", "Milica", "Nikola", "Ivana"]
+ASIDES = ["", "", "", "molim,", "napomena:", "možete li pogledati ovo:"]
+RECIPIENTS = ["mene", "nas", "tim"] + NAMES
 
 
 def normal(text: str) -> str:
@@ -52,23 +54,23 @@ def borrowed() -> tuple[str, ...]:
 
 def _availability(rng: random.Random) -> tuple[str, tuple[str, ...]]:
     actor, modal = rng.choice(ACTORS), rng.choice(MODALS)
-    return f"{actor}{modal} {rng.choice(STATES)}", ("at", "on", "for")
+    return f"{actor} {modal} {rng.choice(STATES)}", ("u", "na", "za")
 
 
 def _hours(rng: random.Random) -> tuple[str, tuple[str, ...]]:
-    return f"{rng.choice(PLACES)} {rng.choice(OPENINGS)}", ("at", "on", "for")
+    return f"{rng.choice(PLACES)} {rng.choice(OPENINGS)}", ("u", "na", "za")
 
 
 def _event(rng: random.Random) -> tuple[str, tuple[str, ...]]:
     determiner, event = rng.choice(DETERMINERS), rng.choice(EVENTS)
-    return f"{determiner} {event} {rng.choice(PREDICATES)}", ("at", "on")
+    return f"{determiner} {event} {rng.choice(PREDICATES)}", ("u", "na")
 
 
 def _request(rng: random.Random) -> tuple[str, tuple[str, ...]]:
     ask = rng.choice(ASKS).format(
         event=rng.choice(EVENTS), room=rng.randint(1, 50), name=rng.choice(NAMES)
     )
-    return f"{rng.choice(LEADS)} {ask}".strip(), ("for", "at", "on", "about")
+    return f"{rng.choice(LEADS)} {ask}".strip(), ("za", "u", "na", "o")
 
 
 SHAPES = [_availability, _hours, _event, _request]
@@ -103,15 +105,15 @@ def suffix(rng: random.Random) -> str:
         if pool and rng.random() < 0.2:
             text = _terminated(rng.choice(pool))
         elif rng.random() < 0.3:
-            text = f"and {_availability(rng)[0]}"
+            text = f"i {_availability(rng)[0]}"
         else:
             text = rng.choice(
                 [
-                    f"works for {rng.choice(RECIPIENTS)}",
-                    f"for {rng.choice(RECIPIENTS)}",
-                    f"if that works for {rng.choice(RECIPIENTS)}",
-                    "is the deadline",
-                    "please",
+                    f"odgovara {rng.choice(RECIPIENTS)}",
+                    f"za {rng.choice(RECIPIENTS)}",
+                    f"ako to odgovara {rng.choice(RECIPIENTS)}",
+                    "je krajnji rok",
+                    "molim",
                 ]
             )
         if normal(text) not in RESERVED:
@@ -124,100 +126,91 @@ def sentence(rng: random.Random) -> str:
         return rng.choice(pool)
     if rng.random() < 0.12:
         subject = rng.choice(
-            ["Our clinic", "The office", "The shop", "The team", "The library"]
+            ["Naša klinika", "Kancelarija", "Prodavnica", "Tim", "Biblioteka"]
         )
         purpose = rng.choice(
-            ["questions", "discussion", "feedback", "suggestions", "comments"]
+            ["pitanja", "diskusiju", "povratne informacije", "predloge", "komentare"]
         )
-        return f"{subject} is open for {purpose}."
+        return f"{subject} prima {purpose}."
     if rng.random() < 0.25:
-        modifier = rng.choice(["next", "last", "previous", "first", "second"])
-        subject = rng.choice(
-            [
-                "step",
-                "chapter",
-                "attempt",
-                "task",
-                "item",
-                "version",
-                "page",
-                "paragraph",
-            ]
+        modifier = rng.choice(["sledeći", "prethodni", "prošli", "prvi", "drugi"])
+        subject = rng.choice(["korak", "pokušaj", "zadatak", "deo", "odeljak"])
+        action = rng.choice(
+            ["otvoriti", "pročitati", "pregledati", "kontrolisati", "kopirati", "zatvoriti"]
         )
-        action = rng.choice(["open", "read", "review", "check", "copy", "close"])
-        item = rng.choice(["file", "report", "document", "menu", "window"])
-        return f"The {modifier} {subject} is to {action} the {item}."
+        item = rng.choice(["fajl", "izveštaj", "dokument", "meni", "prozor"])
+        return f"{modifier.capitalize()} {subject} je {action} {item}."
     noun = rng.choice(
         [
-            "file",
-            "document",
-            "report",
-            "chapter",
-            "book",
-            "story",
-            "table",
-            "column",
-            "row",
-            "window",
-            "menu",
+            "fajl",
+            "dokument",
+            "izveštaj",
+            "poglavlje",
+            "knjiga",
+            "priča",
+            "tabela",
+            "kolona",
+            "red",
+            "prozor",
+            "meni",
             "program",
-            "list",
-            "paragraph",
-            "message",
-            "draft",
-            "page",
-            "section",
-            "option",
-            "example",
-            "step",
+            "spisak",
+            "paragraf",
+            "poruka",
+            "nacrt",
+            "strana",
+            "odeljak",
+            "opcija",
+            "primer",
+            "korak",
         ]
     )
     verb = rng.choice(
         [
-            "open",
-            "close",
-            "read",
-            "review",
-            "print",
-            "select",
-            "send",
-            "check",
-            "copy",
-            "approve",
+            "otvoriti",
+            "zatvoriti",
+            "pročitati",
+            "pregledati",
+            "štampati",
+            "izabrati",
+            "poslati",
+            "kontrolisati",
+            "kopirati",
+            "odobriti",
         ]
     )
-    order = rng.choice(["first", "second", "third", "last", "next", "previous"])
+    order = rng.choice(["prvi", "drugi", "treći", "poslednji", "sledeći", "prethodni"])
     name = rng.choice(NAMES)
     count = rng.randint(1, 99)
     version = rng.randint(1990, 2040)
     phrase = rng.choice(
         [
-            f"Please {verb} the {order} {noun}.",
-            f"Could you {verb} the {noun} for {name}?",
-            f"The {order} {noun} contains {count} examples.",
-            f"The {noun} has {count} rows and {rng.randint(1, 31)} columns.",
-            f"The beginning of the {noun} explains the format.",
-            f"At the end of the {noun}, the author signs it.",
-            f"We may {verb} another {noun}.",
-            f"{name} wrote the {order} {noun}.",
-            f"Send the {order} {noun} to {name}.",
-            f"Build {version} failed with {count} warnings.",
-            f"Choose option {count} from section {rng.randint(1, 12)}.",
-            f"The {order} attempt succeeded.",
-            f"Each {noun} needs a title.",
-            f"Every {noun} in the list contains a number.",
-            f"The field named {rng.choice(['year', 'timestamp', 'date', 'duration'])} contains a string.",
-            f"The word {rng.choice(['midnight', 'tomorrow', 'morning', 'weekend'])} appears in the glossary.",
-            f"From {name} to Alex, the message says hello.",
-            f"Between the two choices, {name} prefers the {order}.",
-            "The soldiers march through the square.",
-            "March in a straight line toward the gate.",
-            "This change looks correct.",
+            f"Molim, treba {verb} {order} {noun}.",
+            f"Možete li {verb} {noun} za {name}?",
+            f"{order.capitalize()} {noun} sadrži {count} primera.",
+            f"{noun.capitalize()} ima {count} redova i {rng.randint(1, 31)} kolona.",
+            f"Početak od {noun} objašnjava format.",
+            f"Na kraju {noun}, autor to potpisuje.",
+            f"Možemo {verb} još jedan {noun}.",
+            f"{name} je napisao {order} {noun}.",
+            f"Pošaljite {order} {noun} osobi {name}.",
+            f"Verzija {version} nije uspela sa {count} upozorenja.",
+            f"Izaberite opciju {count} iz odeljka {rng.randint(1, 12)}.",
+            f"{order.capitalize()} pokušaj je uspeo.",
+            f"Svaki {noun} treba naslov.",
+            f"Svaki {noun} na spisku sadrži broj.",
+            f"Polje po imenu {rng.choice(['godina', 'vremenska oznaka', 'datum', 'trajanje'])} sadrži tekst.",
+            f"Reč {rng.choice(['ponoć', 'sutra', 'jutro', 'vikend'])} se pojavljuje u rečniku.",
+            f"Od {name} do Marka, poruka kaže zdravo.",
+            f"Između dve opcije, {name} bira {order} izbor.",
+            "Vojnici marširaju preko trga.",
+            "Marširajte u pravoj liniji prema kapiji.",
+            "Ova izmena izgleda ispravno.",
         ]
     )
     if rng.random() < 0.4:
         phrase = (
-            rng.choice(["Please, ", "Could you check this: ", "Note: "])
+            rng.choice(["Molim, ", "Možete li pogledati ovo: ", "Napomena: "])
             + phrase[0].lower()
             + phrase[1:]
         )

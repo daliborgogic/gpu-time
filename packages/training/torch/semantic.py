@@ -14,50 +14,50 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from generate import Sentence
 
-DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+DAYS = ["ponedeljak", "utorak", "sreda", "četvrtak", "petak", "subota", "nedelja"]
 DAY_CODES = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"]
 MONTHS = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
+    "januar",
+    "februar",
+    "mart",
+    "april",
+    "maj",
+    "jun",
+    "jul",
+    "avgust",
+    "septembar",
+    "oktobar",
+    "novembar",
+    "decembar",
 ]
 NUMBERS = [
-    "zero",
-    "one",
-    "two",
-    "three",
-    "four",
-    "five",
-    "six",
-    "seven",
-    "eight",
-    "nine",
-    "ten",
-    "eleven",
-    "twelve",
+    "nula",
+    "jedan",
+    "dva",
+    "tri",
+    "četiri",
+    "pet",
+    "šest",
+    "sedam",
+    "osam",
+    "devet",
+    "deset",
+    "jedanaest",
+    "dvanaest",
 ]
 ORDINALS = [
-    "first",
-    "second",
-    "third",
-    "fourth",
-    "fifth",
-    "sixth",
-    "seventh",
-    "eighth",
-    "ninth",
-    "tenth",
-    "eleventh",
-    "twelfth",
+    "prvi",
+    "drugi",
+    "treći",
+    "četvrti",
+    "peti",
+    "šesti",
+    "sedmi",
+    "osmi",
+    "deveti",
+    "deseti",
+    "jedanaesti",
+    "dvanaesti",
 ]
 
 GENERAL_FAMILIES = [
@@ -79,13 +79,122 @@ GENERAL_FAMILIES = [
     "holiday",
 ]
 HOLIDAYS = {
-    "christmas": "Christmas",
-    "christmas-eve": "Christmas Eve",
-    "new-year": "New Year's Day",
-    "new-years-eve": "New Year's Eve",
-    "halloween": "Halloween",
-    "valentines": "Valentine's Day",
+    "christmas": "Božić",
+    "christmas-eve": "Badnje veče",
+    "new-year": "Nova godina",
+    "new-years-eve": "Silvestrovo",
+    "halloween": "Noć veštica",
+    "valentines": "Valentinovo",
 }
+
+# Slavic numeral-noun agreement: singular / "few" (2-4) / "many" surface forms
+# for each internal Unit identifier (plus the standalone "times" counter).
+# "week_sedmica" is an alias some callers pick instead of "week" purely for
+# surface variety -- it is never a real Unit/DateSpec field value.
+UNIT_WORDS: dict[str, tuple[str, str, str]] = {
+    "minute": ("minut", "minuta", "minuta"),
+    "hour": ("sat", "sata", "sati"),
+    "day": ("dan", "dana", "dana"),
+    "week": ("nedelja", "nedelje", "nedelja"),
+    "week_sedmica": ("sedmica", "sedmice", "sedmica"),
+    "month": ("mesec", "meseca", "meseci"),
+    "year": ("godina", "godine", "godina"),
+    "times": ("put", "puta", "puta"),
+}
+
+# Gendered surface forms for the three schedule Modifier values ("this"/
+# "next"/"last"), so a DEICTIC token can agree with whichever noun follows
+# (dan/mesec are masculine; nedelja/sedmica/godina/vikend-adjacent nouns are
+# feminine except vikend itself, which is masculine).
+MODIFIER_FORMS = {
+    "this": {"m": "ovaj", "f": "ova", "n": "ovo"},
+    "next": {"m": "sledeći", "f": "sledeca", "n": "sledeće"},
+    "last": {"m": "prošli", "f": "prošla", "n": "prošlo"},
+}
+EDGE_WORDS = {"start": "početak", "end": "kraj"}
+
+# Grammatical gender of each internal Unit identifier's canonical Serbian
+# noun: minut/sat/dan/mesec are masculine; nedelja/sedmica/godina (and the
+# standalone "put" counter) -- put is masculine too, kept explicit for clarity.
+UNIT_GENDER: dict[str, str] = {
+    "minute": "m",
+    "hour": "m",
+    "day": "m",
+    "week": "f",
+    "week_sedmica": "f",
+    "month": "m",
+    "year": "f",
+    "times": "m",
+}
+
+# Weekday gender, indexed the same way as DAYS/DAY_CODES (MO..SU): sreda,
+# subota, nedelja are feminine; the other four weekdays are masculine.
+WEEKDAY_GENDER = ["m", "m", "f", "m", "m", "f", "f"]
+
+# The gendered "2" numeral and its ordinal, for agreement with whichever noun
+# immediately follows (dva/drugi for masculine, dve/druga for feminine).
+TWO_WORDS = {"m": "dva", "f": "dve"}
+TWO_ORDINAL_WORDS = {"m": "drugi", "f": "druga"}
+
+# Feminine forms of the small ordinals used for ORD/DEICTIC agreement with a
+# feminine noun (a weekday like sreda/subota/nedelja, or a feminine unit).
+ORDINAL_FEMININE = {
+    "prvi": "prva",
+    "drugi": "druga",
+    "treći": "treća",
+    "četvrti": "četvrta",
+    "peti": "peta",
+    "poslednji": "poslednja",
+}
+
+
+def unit_gender(unit: str) -> str:
+    return UNIT_GENDER.get(unit, "m")
+
+
+def weekday_gender(day) -> str:
+    """Accepts a DAY_CODES string (MO..SU), a DAYS full/abbreviated name, or
+    a plain 0..6 index into DAYS/DAY_CODES -- callers hold whichever of these
+    they already have on hand, so this normalizes all three."""
+    if isinstance(day, int):
+        return WEEKDAY_GENDER[day]
+    if day in DAY_CODES:
+        return WEEKDAY_GENDER[DAY_CODES.index(day)]
+    if day in DAYS:
+        return WEEKDAY_GENDER[DAYS.index(day)]
+    lowered = day.lower() if isinstance(day, str) else day
+    for index, name in enumerate(DAYS):
+        if lowered in (name, name.lower(), name[:3], name[:3].lower()):
+            return WEEKDAY_GENDER[index]
+    return "m"
+
+
+def two_word(gender: str, ordinal: bool = False) -> str:
+    return (TWO_ORDINAL_WORDS if ordinal else TWO_WORDS)[gender]
+
+
+def ordinal_feminine(word: str) -> str:
+    return ORDINAL_FEMININE.get(word, word)
+
+
+def unit_form(amount: float, unit: str) -> str:
+    """Serbian numeral-noun agreement: the singular / "few" (2-4) / "many"
+    surface form of `unit` for `amount` (the teens 11-14 always take the
+    "many" form, regardless of their last digit)."""
+    n = abs(int(amount))
+    if n % 100 in (11, 12, 13, 14):
+        index = 2
+    elif n % 10 == 1:
+        index = 0
+    elif n % 10 in (2, 3, 4):
+        index = 1
+    else:
+        index = 2
+    return UNIT_WORDS[unit][index]
+
+
+def modifier_word(modifier: str, gender: str = "m") -> str:
+    return MODIFIER_FORMS[modifier][gender]
 
 
 @dataclass
@@ -217,7 +326,7 @@ def render(spec: Specification, sentence: Sentence, style: int) -> None:
         sentence.add(background.prefix(rng, connector=anchored))
     for index, clause in enumerate(spec.schedule["clauses"]):
         if index and style % 2:
-            sentence.add(rng.choice(["and", ";", ",", "then"]), "JOIN")
+            sentence.add(rng.choice(["i", ";", ",", "zatim"]), "JOIN")
         sentence.clause()
         if spec.family in GENERAL_FAMILIES:
             render_general(clause, sentence, style)
@@ -228,27 +337,28 @@ def render(spec: Specification, sentence: Sentence, style: int) -> None:
         elif spec.family == "relative-day":
             sentence.add(
                 {
-                    -1: "yesterday",
-                    0: "today",
-                    1: "tomorrow",
-                    2: "the day after tomorrow",
+                    -1: "juče",
+                    0: "danas",
+                    1: "sutra",
+                    2: "prekosutra",
                 }[clause["date"]["offset"]],
                 "REL_DAY",
             )
         elif spec.family == "relative-unit":
             date = clause["date"]
             if date.get("edge"):
-                sentence.add(date["edge"], "EDGE")
-                sentence.add("of")
-            sentence.add(date["modifier"], "DEICTIC")
-            sentence.add(date["unit"], "UNIT")
+                sentence.add(EDGE_WORDS[date["edge"]], "EDGE")
+                sentence.add("od")
+            gender = "f" if date["unit"] in ("week", "year") else "m"
+            sentence.add(modifier_word(date["modifier"], gender), "DEICTIC")
+            sentence.add(UNIT_WORDS[date["unit"]][0], "UNIT")
         elif spec.family == "modified-group":
-            sentence.add(clause["date"]["modifier"], "DEICTIC")
-            sentence.add("weekend", "DAYGROUP")
+            sentence.add(modifier_word(clause["date"]["modifier"], "m"), "DEICTIC")
+            sentence.add("vikend", "DAYGROUP")
         elif spec.family == "bounded-weekday":
-            sentence.add("every", "RECUR")
-            sentence.add("day", "UNIT")
-            sentence.add(rng.choice(["through", "until"]), "BOUND_END")
+            sentence.add("svaki", "RECUR")
+            sentence.add("dan", "UNIT")
+            sentence.add(rng.choice(["do", "sve do"]), "BOUND_END")
             sentence.add(
                 DAYS[DAY_CODES.index(clause["recurrence"]["until"]["days"][0])],
                 "WEEKDAY",
@@ -256,66 +366,67 @@ def render(spec: Specification, sentence: Sentence, style: int) -> None:
         elif spec.family == "weekday-points":
             day = DAYS[DAY_CODES.index(clause["date"]["days"][0])]
             sentence.add(day[:3] if style % 2 else day, "WEEKDAY")
-            sentence.add("at")
+            sentence.add("u")
             sentence.add(str(clause["time"]["start"]["hour"]), "HOUR")
         elif spec.family == "monthly-ordinal":
             rule = clause["recurrence"]
             position = rule["bySetPos"][0]
-            sentence.add(
-                "last"
+            day_code = rule["byDay"][0]
+            ord_word = (
+                "poslednji"
                 if position == -1
-                else ["first", "second", "third", "fourth", "fifth"][position - 1],
-                "ORD",
+                else ["prvi", "drugi", "treći", "četvrti", "peti"][position - 1]
             )
-            sentence.add(DAYS[DAY_CODES.index(rule["byDay"][0])], "WEEKDAY")
-            sentence.add("of")
+            if weekday_gender(day_code) == "f":
+                ord_word = ordinal_feminine(ord_word)
+            sentence.add(ord_word, "ORD")
+            sentence.add(DAYS[DAY_CODES.index(day_code)], "WEEKDAY")
+            sentence.add("od")
             if style % 2:
-                sentence.add("every", "RECUR")
-            else:
-                sentence.add("the")
-            sentence.add("month", "UNIT")
+                sentence.add("svaki", "RECUR")
+            sentence.add("mesec", "UNIT")
         elif spec.family == "monthly-days":
             days = clause["recurrence"]["byMonthDay"]
             if style % 2:
-                sentence.add("every", "RECUR")
-                sentence.add("month", "UNIT")
-                sentence.add("on")
+                sentence.add("svaki", "RECUR")
+                sentence.add("mesec", "UNIT")
             for position, day in enumerate(days):
                 if position:
-                    sentence.add("and")
+                    sentence.add("i")
                 ordinal(day, sentence)
             if style % 2 == 0:
-                sentence.add("of")
-                sentence.add("each", "RECUR")
-                sentence.add("month", "UNIT")
+                sentence.add("od")
+                sentence.add("svako", "RECUR")
+                sentence.add("mesec", "UNIT")
         else:
             recurrence = clause.get("recurrence")
+            days = recurrence["byDay"] if recurrence else clause["date"]["days"]
             if recurrence:
                 interval = recurrence["interval"]
                 sentence.add(
-                    rng.choice(["every", "each"]) if interval == 1 else "every",
+                    rng.choice(["svaki", "svako"]) if interval == 1 else "svaki",
                     "RECUR",
                 )
                 if interval == 2 and style % 2:
-                    sentence.add("other", "NUM")
+                    gender = weekday_gender(days[0])
+                    sentence.add("druga" if gender == "f" else "drugi", "NUM")
                 elif interval > 1:
-                    sentence.quantity(interval)
-                    sentence.add("weeks", "UNIT")
-                    sentence.add("on")
-            days = recurrence["byDay"] if recurrence else clause["date"]["days"]
+                    sentence.quantity(interval, gender=unit_gender("week"))
+                    sentence.add(unit_form(interval, "week"), "UNIT")
+                    sentence.add("u")
             for position, day in enumerate(days):
                 if position and style % 3:
-                    sentence.add(rng.choice(["and", ",", "&"]), "JOIN")
+                    sentence.add(rng.choice(["i", ",", "&"]), "JOIN")
                 name = DAYS[DAY_CODES.index(day)]
                 sentence.add(name[:3] if style % 2 else name, "WEEKDAY")
             if style % 3 == 0:
-                sentence.add("from", "RANGE_START")
+                sentence.add("od", "RANGE_START")
             clock(clause["time"]["start"], sentence, style)
-            sentence.add("to" if style % 3 == 0 else "-", "RANGE_END")
+            sentence.add("do" if style % 3 == 0 else "-", "RANGE_END")
             clock(clause["time"]["end"], sentence, style)
     if rng.random() < 0.2:
         sentence.in_expression = False
-        sentence.add(rng.choice(["please", "for our team", "works for me"]))
+        sentence.add(rng.choice(["molim", "za naš tim", "to mi odgovara"]))
 
 
 def ordinal(day: int, sentence: Sentence) -> None:
@@ -323,10 +434,7 @@ def ordinal(day: int, sentence: Sentence) -> None:
         sentence.add(ORDINALS[day - 1], "DOM")
         return
     sentence.add(str(day), "DOM")
-    suffix = (
-        "th" if day in (11, 12, 13) else {1: "st", 2: "nd", 3: "rd"}.get(day % 10, "th")
-    )
-    sentence.add(suffix, separator="")
+    sentence.add(".", separator="")
 
 
 def calendar(date: dict, sentence: Sentence, style: int) -> None:
@@ -347,12 +455,15 @@ def calendar(date: dict, sentence: Sentence, style: int) -> None:
             fields.append((year, "YEAR"))
     else:
         named = MONTHS[month - 1]
-        day_text = (
-            ORDINALS[day - 1] if day <= 12 and sentence.rng.random() < 0.5 else day
-        )
+        spell_day = day <= 12 and sentence.rng.random() < 0.5
+        day_text = ORDINALS[day - 1] if spell_day else day
+        # Day-before-month is the common Serbian prose order (matches the DMY
+        # default); month-first stays available as a minority stylistic
+        # variant, gated on the pre-existing spell_day/style draws so no new
+        # RNG call is introduced.
         fields = (
             [(named, "MONTH"), (day_text, "DOM")]
-            if style % 2
+            if spell_day and style % 2
             else [(day_text, "DOM"), (named, "MONTH")]
         )
         if year:
@@ -366,7 +477,7 @@ def calendar(date: dict, sentence: Sentence, style: int) -> None:
             and separator == " "
             and sentence.rng.random() < 0.5
         ):
-            sentence.add("of")
+            sentence.add("od")
         if index and separator != " ":
             sentence.add(separator, separator="")
         sentence.add(str(value), label, separator="" if separator != " " else " ")
@@ -378,35 +489,44 @@ def relative(clause: dict, sentence: Sentence, style: int) -> None:
     label = "DIR_AFTER" if direction == "after" else "DIR_BEFORE"
     prefix = style % 2 and not clause.get("date")
     if prefix:
-        sentence.add("in" if direction == "after" else "before", label)
+        sentence.add("za" if direction == "after" else "pre", label)
     sentence.quantity_unit([shift["unit"]], shift["amount"])
     if not prefix:
         sentence.add(
-            ("from" if clause["date"]["kind"] == "now" else direction)
+            (
+                "od"
+                if clause["date"]["kind"] == "now"
+                else ("posle" if direction == "after" else "pre")
+            )
             if clause.get("date")
             else sentence.rng.choice(
-                ["after", "later"]
+                ["posle", "kasnije"]
                 if direction == "after"
-                else ["before", "ago", "earlier"]
+                else ["pre", "unazad", "ranije"]
             ),
             label,
         )
     if clause.get("date"):
         if clause["date"]["kind"] == "now":
-            sentence.add("now", "NOW")
+            sentence.add("sada", "NOW")
             return
         render_date(clause["date"], sentence, style)
         if clause.get("time"):
-            sentence.add("at")
+            sentence.add("u")
             clock(clause["time"]["start"], sentence, style)
 
 
 def clock(value: dict, sentence: Sentence, style: int) -> None:
     if "named" in value:
-        sentence.add(value["named"], "TIME_NAMED")
+        sentence.add({"noon": "podne", "midnight": "ponoć"}[value["named"]], "TIME_NAMED")
         return
     if "part" in value:
-        sentence.add(value["part"], "DAYPART")
+        sentence.add(
+            {"morning": "jutro", "afternoon": "popodne", "evening": "veče", "night": "noć"}[
+                value["part"]
+            ],
+            "DAYPART",
+        )
         return
     hour, minute = value["hour"], value["minute"]
     meridiem = style % 2 == 0
@@ -427,14 +547,15 @@ def clock(value: dict, sentence: Sentence, style: int) -> None:
         sentence.add(f"{value['second']:02d}", "SECOND", separator="")
     if meridiem:
         if sentence.rng.random() < 0.25:
-            period = "morning" if hour < 12 else "afternoon" if hour < 18 else "evening"
-            article = "the " if sentence.rng.random() < 0.9 else ""
-            sentence.add(f"in {article}{period}", "MERIDIEM")
+            period = "ujutru" if hour < 12 else "popodne" if hour < 18 else "uveče"
+            sentence.add(period, "MERIDIEM")
             return
         separator = (
             " " if hour_text.isalpha() and not minute and "second" not in value else ""
         )
-        sentence.add("pm" if hour >= 12 else "am", "MERIDIEM", separator=separator)
+        sentence.add(
+            "popodne" if hour >= 12 else "ujutru", "MERIDIEM", separator=separator
+        )
 
 
 def sample_clock(rng: random.Random) -> dict:
@@ -596,7 +717,7 @@ def sample_general(family: str, rng: random.Random) -> dict:
 def render_days(days: list[str], sentence: Sentence, style: int) -> None:
     for index, day in enumerate(days):
         if index:
-            sentence.add("and", "JOIN")
+            sentence.add("i", "JOIN")
         name = DAYS[DAY_CODES.index(day)]
         sentence.add(name[:3] if style % 2 else name, "WEEKDAY")
 
@@ -604,22 +725,23 @@ def render_days(days: list[str], sentence: Sentence, style: int) -> None:
 def render_date(date: dict, sentence: Sentence, style: int) -> None:
     kind = date["kind"]
     if kind == "now":
-        sentence.add("now", "NOW")
+        sentence.add("sada", "NOW")
     elif kind == "relativeDay":
         sentence.add(
-            {-1: "yesterday", 0: "today", 1: "tomorrow", 2: "the day after tomorrow"}[
-                date["offset"]
-            ],
+            {-1: "juče", 0: "danas", 1: "sutra", 2: "prekosutra"}[date["offset"]],
             "REL_DAY",
         )
     elif kind == "weekday":
         if date.get("modifier"):
-            sentence.add(date["modifier"], "DEICTIC")
+            sentence.add(
+                modifier_word(date["modifier"], weekday_gender(date["days"][0])),
+                "DEICTIC",
+            )
         render_days(date["days"], sentence, style)
     elif kind == "weekdayRange":
-        sentence.add("from", "RANGE_START")
+        sentence.add("od", "RANGE_START")
         render_days([date["from"]], sentence, style)
-        sentence.add("to", "RANGE_END")
+        sentence.add("do", "RANGE_END")
         render_days([date["to"]], sentence, style)
     elif kind == "holiday":
         sentence.add(HOLIDAYS[date["name"]], "HOLIDAY")
@@ -627,14 +749,15 @@ def render_date(date: dict, sentence: Sentence, style: int) -> None:
         calendar(date, sentence, style)
     elif kind == "calendarRange":
         calendar(date["from"], sentence, 5)
-        sentence.add("to", "RANGE_END")
+        sentence.add("do", "RANGE_END")
         calendar(date["to"], sentence, 5)
     elif kind == "relativeUnit":
         if date.get("edge"):
-            sentence.add(date["edge"], "EDGE")
-            sentence.add("of")
-        sentence.add(date["modifier"], "DEICTIC")
-        sentence.add(date["unit"], "UNIT")
+            sentence.add(EDGE_WORDS[date["edge"]], "EDGE")
+            sentence.add("od")
+        gender = "f" if date["unit"] in ("week", "year") else "m"
+        sentence.add(modifier_word(date["modifier"], gender), "DEICTIC")
+        sentence.add(UNIT_WORDS[date["unit"]][0], "UNIT")
     else:
         raise ValueError(f"No date renderer for {kind}")
 
@@ -647,21 +770,19 @@ def render_general(clause: dict, sentence: Sentence, style: int) -> None:
     if rule:
         if rule.get("timesPer"):
             sentence.quantity(rule["timesPer"])
-            sentence.add("times", "TIMES")
-            sentence.add("per", "RECUR")
-            sentence.add("day" if rule["freq"] == "daily" else "week", "UNIT")
+            sentence.add("puta", "TIMES")
+            sentence.add("na", "RECUR")
+            sentence.add("dan" if rule["freq"] == "daily" else "nedelju", "UNIT")
         elif rule["interval"] == 1 and rule.get("byDay") in (
             DAY_CODES[:5],
             DAY_CODES[5:],
         ):
-            sentence.add("every", "RECUR")
+            sentence.add("svaki", "RECUR")
             sentence.add(
-                "weekday" if rule["byDay"] == DAY_CODES[:5] else "weekend", "DAYGROUP"
+                "radni dan" if rule["byDay"] == DAY_CODES[:5] else "vikend", "DAYGROUP"
             )
         else:
-            sentence.add("every", "RECUR")
-            if rule["interval"] > 1:
-                sentence.quantity(rule["interval"])
+            sentence.add("svaki", "RECUR")
             period = {
                 "hourly": "hour",
                 "daily": "day",
@@ -669,55 +790,58 @@ def render_general(clause: dict, sentence: Sentence, style: int) -> None:
                 "monthly": "month",
                 "yearly": "year",
             }[rule["freq"]]
-            sentence.add(period + ("s" if rule["interval"] > 1 else ""), "UNIT")
+            if rule["interval"] > 1:
+                sentence.quantity(rule["interval"], gender=unit_gender(period))
+            sentence.add(
+                unit_form(rule["interval"], period) if rule["interval"] > 1 else UNIT_WORDS[period][0],
+                "UNIT",
+            )
             if rule.get("byDay"):
-                sentence.add("on")
+                sentence.add("u")
                 render_days(rule["byDay"], sentence, style)
             if rule.get("byMonth"):
-                sentence.add("on")
-                sentence.add(MONTHS[rule["byMonth"][0] - 1], "MONTH")
+                # Day-before-month, matching the calendar()/date() day-first fix.
                 sentence.quantity(rule["byMonthDay"][0], "DOM")
+                sentence.add(".", separator="")
+                sentence.add(MONTHS[rule["byMonth"][0] - 1], "MONTH")
     elif clause.get("date"):
         render_date(clause["date"], sentence, style)
     if clause.get("time"):
         has_end = bool(clause["time"].get("end"))
         if has_end and style % 3 == 0:
-            sentence.add("from", "RANGE_START")
+            sentence.add("od", "RANGE_START")
         elif has_end and style % 3 == 1:
-            sentence.add("between", "RANGE_START")
+            sentence.add("između", "RANGE_START")
         else:
-            sentence.add("at")
+            sentence.add("u")
         clock(clause["time"]["start"], sentence, style)
         if has_end:
             sentence.add(
-                "and"
+                "i"
                 if style % 3 == 1
-                else sentence.rng.choice(["to", "-", "–", "through"]),
+                else sentence.rng.choice(["do", "-", "–", "kroz"]),
                 "RANGE_END",
             )
             clock(clause["time"]["end"], sentence, style)
     if rule:
         for field, marker, label in [
-            ("start", "starting", "BOUND_START"),
-            ("until", "until", "BOUND_END"),
+            ("start", "od", "BOUND_START"),
+            ("until", "do", "BOUND_END"),
         ]:
             if rule.get(field):
                 sentence.add(marker, label)
                 render_date(rule[field], sentence, style)
         if rule.get("count"):
-            sentence.add("for")
+            sentence.add("za")
             sentence.quantity(rule["count"])
-            sentence.add("occurrences", "COUNT")
+            sentence.add("puta", "COUNT")
         if rule.get("except"):
-            sentence.add("except", "EXCEPT")
+            sentence.add("osim", "EXCEPT")
             render_date(rule["except"][0], sentence, style)
     duration = clause.get("duration") or (rule or {}).get("span")
     if duration:
-        sentence.add("for", "DUR")
+        sentence.add("za", "DUR")
         next_duration = sentence.rng.random() < 0.3
         if next_duration:
-            sentence.add("the")
-            sentence.add("next", "DEICTIC")
-        sentence.quantity_unit(
-            [duration["unit"]], duration["amount"], allow_article=not next_duration
-        )
+            sentence.add(sentence.rng.choice(["sledeći", "naredni"]), "DEICTIC")
+        sentence.quantity_unit([duration["unit"]], duration["amount"])

@@ -131,7 +131,7 @@ try {
         `${width}px: initial layout shift`,
       );
       const beforeTyping = await page.locator("#demo-dates").innerText();
-      await page.locator("#demo-input").fill("tomorrow at 9am");
+      await page.locator("#demo-input").fill("sutra u 9ujutru");
       await page.waitForFunction(
         (before) =>
           document.querySelector("#demo-result").getAttribute("aria-busy") ===
@@ -250,7 +250,7 @@ try {
   });
   await cpuOnly.goto(url);
   const beforeCpuTyping = await cpuOnly.locator("#demo-dates").innerText();
-  await cpuOnly.locator("#demo-input").fill("tomorrow at 9am");
+  await cpuOnly.locator("#demo-input").fill("sutra u 9ujutru");
   await cpuOnly.waitForFunction(
     (before) =>
       document.querySelector("#demo-result").getAttribute("aria-busy") ===

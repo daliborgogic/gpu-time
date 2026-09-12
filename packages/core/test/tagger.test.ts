@@ -12,7 +12,7 @@ vi.mock("../src/resolve.js", () => {
 it("returns source-aligned predictions without interpreting calendar values", async () => {
   const tagger = await createTagger({ backend: "cpu" });
   try {
-    const text = "27pm";
+    const text = "27popodne";
     const result = await tagger.tag(text);
     expect(
       result.tokens.map((token) => ({
@@ -23,7 +23,7 @@ it("returns source-aligned predictions without interpreting calendar values", as
       })),
     ).toEqual([
       { text: "27", start: 0, end: 2, label: Role.HOUR },
-      { text: "pm", start: 2, end: 4, label: Role.MERIDIEM },
+      { text: "popodne", start: 2, end: 9, label: Role.MERIDIEM },
     ]);
     expect(result.unknownLabels).toBe(false);
     expect(result).not.toHaveProperty("expressions");

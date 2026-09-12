@@ -14,7 +14,7 @@ The package keeps its WebGPU device, pipelines, weights, and grow-only buffers r
 
 One CPU scan splits the input into tokens and emits a sparse feature row per token. Each row records character shape, casing, digit and punctuation class, length bucket, lexicon membership for the closed vocabulary of time words, and hashes of neighboring tokens. There are 324 embedding rows in the feature table.
 
-The tokenizer uses regular expressions and an English lexicon. The compiler and calendar resolver also run on the CPU.
+The tokenizer uses regular expressions and a Serbian (Latin script) lexicon. The compiler and calendar resolver also run on the CPU.
 
 ## Learned context
 

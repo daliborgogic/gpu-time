@@ -8,10 +8,27 @@ from __future__ import annotations
 import random
 from copy import deepcopy
 import background
-from semantic import DAYS, DAY_CODES, MONTHS, Specification
+from semantic import (
+    DAYS,
+    DAY_CODES,
+    MONTHS,
+    Specification,
+    unit_form,
+    unit_gender,
+    modifier_word,
+    weekday_gender,
+    ordinal_feminine,
+)
 
-ONES = "zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen".split()
-TENS = {20: "twenty", 30: "thirty", 40: "forty", 50: "fifty"}
+ONES = (
+    "nula jedan dva tri četiri pet šest sedam osam devet deset jedanaest "
+    "dvanaest trinaest četrnaest petnaest šesnaest sedamnaest osamnaest devetnaest"
+).split()
+TENS = {20: "dvadeset", 30: "trideset", 40: "četrdeset", 50: "pedeset"}
+# am -> ujutru/izjutra, pm -> popodne/uveče/uvece per the compiler's meridiem
+# adverb scheme; these are the single fixed forms used wherever the internal
+# "am"/"pm" value itself would otherwise leak out as display text.
+MERIDIEM_WORDS = {"am": "ujutru", "pm": "popodne"}
 FAMILIES = [
     "spoken-clock",
     "fraction-clock",
@@ -31,12 +48,12 @@ FAMILIES = [
     "shared-times",
 ]
 RESERVED = [
-    "could you arrange a reminder for",
-    "our rehearsal begins at",
-    "the train leaves at",
-    "please put this in my diary for",
+    "možete li zakazati podsetnik za",
+    "naša proba počinje u",
+    "voz polazi u",
+    "molim vas upišite ovo u moj dnevnik za",
 ]
-RESERVED_DURATION = ["allow extra time", "the workshop continues"]
+RESERVED_DURATION = ["ostavite dodatno vreme", "radionica se nastavlja"]
 # Registered rather than imported: background cannot see natural without closing
 # the cycle that runs back through semantic.
 background.reserve(RESERVED + RESERVED_DURATION)
@@ -46,7 +63,9 @@ def words(value, hyphen=False):
     if value < 20:
         return ONES[value]
     tens, ones = divmod(value, 10)
-    return TENS[tens * 10] + (("-" if hyphen else " ") + ONES[ones] if ones else "")
+    # Serbian never hyphenates compound numbers; `hyphen` is kept only so
+    # callers' existing rng draw still lands in the same place.
+    return TENS[tens * 10] + (" " + ONES[ones] if ones else "")
 
 
 def clock(s, mode=None, hour=None):
@@ -58,20 +77,31 @@ def clock(s, mode=None, hour=None):
     if mode == "fraction":
         m = r.choice([15, 30, 45])
         subtract = m == 45
-        s.add("quarter" if m != 30 else "half", "CLOCK_OFFSET")
-        s.add("to" if subtract else "past", "GLUE")
-        target = h % 12 + 1 if subtract else h
-        s.add(words(target), "HOUR")
-        s.add(meridiem, "MERIDIEM")
-        target24 = target % 12 + (12 if meridiem == "pm" else 0)
-        total = (target24 * 60 + (-15 if subtract else m)) % 1440
+        if subtract:
+            target = h % 12 + 1
+            s.add("četvrt", "CLOCK_OFFSET")
+            s.add("do", "GLUE")
+            s.add(words(target), "HOUR")
+            s.add(MERIDIEM_WORDS[meridiem], "MERIDIEM")
+            target24 = target % 12 + (12 if meridiem == "pm" else 0)
+            total = (target24 * 60 - 15) % 1440
+            return {"hour": total // 60, "minute": total % 60}
+        # "Past the hour" is not a CLOCK_OFFSET in Serbian: it is an ordinary
+        # spoken minute joined to the hour with "i" ("pet i petnaest").
+        s.add(words(h), "HOUR")
+        s.add("i", "GLUE")
+        s.add(words(m), "MINUTE")
+        s.add(MERIDIEM_WORDS[meridiem], "MERIDIEM")
+        target24 = h % 12 + (12 if meridiem == "pm" else 0)
+        total = (target24 * 60 + m) % 1440
         return {"hour": total // 60, "minute": total % 60}
     s.add(words(h) if mode == "spoken" or r.random() < 0.4 else str(h), "HOUR")
     if mode == "spoken":
         if m:
             s.add(words(m, r.random() < 0.5), "MINUTE")
         else:
-            s.add(r.choice(["o'clock", "o’clock", "oclock"]), "MERIDIEM")
+            # No Serbian "o'clock": a bare hour count word is just filler.
+            s.add(unit_form(h, "hour"))
     elif mode == "qualified":
         m = 0
     else:
@@ -79,15 +109,15 @@ def clock(s, mode=None, hour=None):
         s.add(f"{m:02}", "MINUTE", "")
     if mode == "qualified":
         qualifier = (
-            r.choice(["in the morning", "in morning"])
+            r.choice(["ujutru", "izjutra"])
             if meridiem == "am"
-            else r.choice(["in the afternoon", "in the evening", "at night"])
+            else r.choice(["popodne", "uveče", "noću"])
         )
         s.add(qualifier, "MERIDIEM")
-        if h == 12 and qualifier == "at night":
+        if h == 12 and qualifier == "noću":
             meridiem = "am"
     elif r.random() < 0.85:
-        s.add(meridiem, "MERIDIEM")
+        s.add(MERIDIEM_WORDS[meridiem], "MERIDIEM")
     else:
         meridiem = None
     return {
@@ -97,14 +127,21 @@ def clock(s, mode=None, hour=None):
 
 
 def quantity(s, amount, name):
-    s.add(words(amount) if amount < 60 and s.rng.random() < 0.6 else str(amount), "NUM")
-    s.add(name if amount == 1 else name + "s", "UNIT")
+    gender = unit_gender(name)
+    if amount == 2 and gender == "f":
+        spoken = "dve"
+    elif amount == 1 and gender == "f":
+        spoken = "jedna"
+    else:
+        spoken = words(amount)
+    s.add(spoken if amount < 60 and s.rng.random() < 0.6 else str(amount), "NUM")
+    s.add(unit_form(amount, name), "UNIT")
 
 
 def calendar(s, date, numeric=False):
     r = s.rng
     if numeric:
-        order = r.choice(["MDY", "DMY"])
+        order = r.choice(["DMY", "DMY", "MDY"])
         sep = r.choice(["/", "-"])
         for i, key in enumerate(
             ["month", "day", "year"] if order == "MDY" else ["day", "month", "year"]
@@ -121,15 +158,24 @@ def calendar(s, date, numeric=False):
                 "",
             )
     else:
-        s.add(
+        # Day-before-month is the common Serbian prose order (matches the
+        # DMY default); month-first stays available as a minority variant.
+        day_first = r.random() < 0.8
+        month_text = (
             MONTHS[date["month"] - 1]
             if r.random() < 0.5
-            else MONTHS[date["month"] - 1][:3],
-            "MONTH",
+            else MONTHS[date["month"] - 1][:3]
         )
-        if r.random() < 0.3:
+        add_period = r.random() < 0.3
+        if day_first:
+            s.add(str(date["day"]), "DOM")
             s.add(".", "GLUE", "")
-        s.add(str(date["day"]), "DOM")
+            s.add(month_text, "MONTH")
+        else:
+            s.add(month_text, "MONTH")
+            if add_period:
+                s.add(".", "GLUE", "")
+            s.add(str(date["day"]), "DOM")
         if date.get("year"):
             s.add(str(date["year"]), "YEAR")
 
@@ -163,12 +209,12 @@ def render(s, reserved=False, family=None, bare=False):
         clause = {"time": {"start": clock(s, mode)}}
     elif family in ("compound-duration", "compound-shift"):
         shift = family == "compound-shift"
-        s.add("in" if shift else "for", "DIR_AFTER" if shift else "DUR")
+        s.add("za", "DIR_AFTER" if shift else "DUR")
         first = r.randint(1, 5)
         second = r.randint(1, 11)
         units = r.choice([("hour", "minute"), ("day", "hour"), ("week", "day")])
         quantity(s, first, units[0])
-        s.add("and", "GLUE")
+        s.add("i", "GLUE")
         quantity(s, second, units[1])
         value = {
             "amount": first,
@@ -180,24 +226,21 @@ def render(s, reserved=False, family=None, bare=False):
         clause = {"shift" if shift else "duration": value}
     elif family == "fraction-duration":
         shift = r.random() < 0.5
-        s.add("in" if shift else "for", "DIR_AFTER" if shift else "DUR")
+        s.add("za", "DIR_AFTER" if shift else "DUR")
         style = r.randrange(3)
         amount = r.randint(1, 4) + 0.5
         if style == 0:
             amount = 0.5
-            s.add("half", "NUM")
-            s.add("an", "NUM")
-            s.add("hour", "UNIT")
+            s.add(r.choice(["pola", "po"]), "NUM")
+            s.add("sata", "UNIT")
         elif style == 1:
             amount = 1.5
-            s.add("an", "NUM")
-            s.add("hour", "UNIT")
-            s.add("and", "GLUE")
-            s.add("a", "NUM")
-            s.add("half", "NUM")
+            s.add("sat", "UNIT")
+            s.add("i", "GLUE")
+            s.add("po", "NUM")
         else:
             s.add(str(amount), "NUM")
-            s.add("hours", "UNIT")
+            s.add("sata", "UNIT")
         value = {"amount": amount, "unit": "hour"}
         if shift:
             value["direction"] = "after"
@@ -210,52 +253,31 @@ def render(s, reserved=False, family=None, bare=False):
         }
         if family == "prose-date" and r.random() < 0.35:
             date = {"day": r.randint(1, 28)}
-            s.add("on the", "GLUE")
             s.add(str(date["day"]), "DOM")
-            s.add(
-                "th"
-                if 10 <= date["day"] % 100 <= 20
-                else {1: "st", 2: "nd", 3: "rd"}.get(date["day"] % 10, "th"),
-                "GLUE",
-                "",
-            )
+            s.add(".", "GLUE", "")
         else:
             calendar(s, date, family == "numeric-date")
         clause = {"date": {"kind": "calendar", **date}}
         if r.random() < 0.65:
-            s.add("at", "GLUE")
+            s.add("u", "GLUE")
             clause["time"] = {"start": clock(s)}
     elif family == "date-range":
         month = r.randint(1, 12)
         start = r.randint(1, 12)
         end = r.randint(16, 28)
-        s.add("from", "RANGE_START")
+        s.add("od", "RANGE_START")
         annotated = r.random() < 0.3
         if annotated:
             s.add(r.choice(DAYS), "WEEKDAY")
-            s.add("the", "GLUE")
             s.add(str(start), "DOM")
-            s.add(
-                "th"
-                if 10 <= start % 100 <= 20
-                else {1: "st", 2: "nd", 3: "rd"}.get(start % 10, "th"),
-                "GLUE",
-                "",
-            )
+            s.add(".", "GLUE", "")
         else:
             calendar(s, {"month": month, "day": start})
-        s.add(r.choice(["through", "until", "to"]), "RANGE_END")
+        s.add(r.choice(["do", "sve do", "kroz"]), "RANGE_END")
         if annotated:
             s.add(r.choice(DAYS), "WEEKDAY")
-            s.add("the", "GLUE")
             s.add(str(end), "DOM")
-            s.add(
-                "th"
-                if 10 <= end % 100 <= 20
-                else {1: "st", 2: "nd", 3: "rd"}.get(end % 10, "th"),
-                "GLUE",
-                "",
-            )
+            s.add(".", "GLUE", "")
         else:
             calendar(s, {"month": month, "day": end})
         clause = {
@@ -276,11 +298,11 @@ def render(s, reserved=False, family=None, bare=False):
     elif family == "datetime-range":
         day = r.randint(0, 5)
         s.add(DAYS[day], "WEEKDAY")
-        s.add("at", "GLUE")
+        s.add("u", "GLUE")
         begin = clock(s, "digits")
-        s.add(r.choice(["until", "to"]), "RANGE_END")
+        s.add(r.choice(["do", "sve do"]), "RANGE_END")
         s.add(DAYS[day + 1], "WEEKDAY")
-        s.add("at", "GLUE")
+        s.add("u", "GLUE")
         end = clock(s, "digits")
         clause = {
             "date": {"kind": "weekday", "days": [DAY_CODES[day]]},
@@ -291,14 +313,14 @@ def render(s, reserved=False, family=None, bare=False):
         month = r.randint(1, 12)
         if family == "month-week":
             week = r.randint(1, 4)
-            s.add(["first", "second", "third", "fourth"][week - 1], "ORD")
-            s.add("week", "UNIT")
-            s.add("of", "GLUE")
+            s.add(["prva", "druga", "treća", "četvrta"][week - 1], "ORD")
+            s.add("nedelja", "UNIT")
+            s.add("od", "GLUE")
             s.add(MONTHS[month - 1], "MONTH")
             clause = {"date": {"kind": "calendarPeriod", "month": month, "week": week}}
         else:
             modifier = r.choice(["this", "next", "last"])
-            s.add(modifier, "DEICTIC")
+            s.add(modifier_word(modifier, "m"), "DEICTIC")
             s.add(MONTHS[month - 1], "MONTH")
             clause = {
                 "date": {"kind": "calendarPeriod", "month": month, "modifier": modifier}
@@ -311,19 +333,32 @@ def render(s, reserved=False, family=None, bare=False):
             and r.random() < 0.5
         )
         if not group or r.random() < 0.5:
-            s.add("every", "RECUR")
+            s.add("svaki", "RECUR")
         if family == "recurrence":
             interval = r.randint(1, 3)
             if interval > 1:
-                s.add(
-                    "other" if interval == 2 and r.random() < 0.5 else words(interval),
-                    "NUM",
+                has_unit = r.random() < 0.5
+                gender = (
+                    unit_gender("week")
+                    if has_unit
+                    else ("m" if group else weekday_gender(day))
                 )
-                if r.random() < 0.5:
-                    s.add("weeks", "UNIT")
-                    s.add("on", "GLUE")
+                if interval == 2:
+                    s.add(
+                        (
+                            ("druga" if gender == "f" else "drugi")
+                            if r.random() < 0.5
+                            else ("dve" if gender == "f" else "dva")
+                        ),
+                        "NUM",
+                    )
+                else:
+                    s.add(words(interval), "NUM")
+                if has_unit:
+                    s.add(unit_form(interval, "week"), "UNIT")
+                    s.add("u", "GLUE")
         if group:
-            s.add("weekday" if r.random() < 0.5 else "weekdays", "DAYGROUP")
+            s.add("radni dan" if r.random() < 0.5 else "radni dani", "DAYGROUP")
         else:
             s.add(DAYS[day], "WEEKDAY")
         rule = {"freq": "weekly", "interval": interval, "byDay": [DAY_CODES[day]]}
@@ -331,23 +366,25 @@ def render(s, reserved=False, family=None, bare=False):
             rule["byDay"] = DAY_CODES[:5]
         if group and family == "recurrence" and interval == 1 and r.random() < 0.3:
             return Specification(family, {"clauses": [{"recurrence": rule}]})
-        s.add("at", "GLUE")
+        s.add("u", "GLUE")
         start = clock(s)
         clause = {"recurrence": rule, "time": {"start": start}}
         if family == "recurrence-bound":
-            s.add("until", "BOUND_END")
+            s.add("do", "BOUND_END")
             date = {"year": 2036, "month": r.randint(1, 12), "day": r.randint(1, 28)}
             calendar(s, date)
             rule["until"] = {"kind": "calendar", **date}
         elif family == "monthly-exception":
             ordinal = r.choice([1, 2, -1])
-            s.add("except", "EXCEPT")
-            s.add("the", "GLUE")
-            s.add({1: "first", 2: "second", -1: "last"}[ordinal], "ORD")
+            ord_word = {1: "prvi", 2: "drugi", -1: "poslednji"}[ordinal]
+            if weekday_gender(day) == "f":
+                ord_word = ordinal_feminine(ord_word)
+            s.add("osim", "EXCEPT")
+            s.add(ord_word, "ORD")
             s.add(DAYS[day], "WEEKDAY")
-            s.add("of", "GLUE")
-            s.add("each", "RECUR")
-            s.add("month", "UNIT")
+            s.add("od", "GLUE")
+            s.add("svako", "RECUR")
+            s.add("mesec", "UNIT")
             rule["except"] = [
                 {
                     "kind": "ordinalWeekday",
@@ -358,7 +395,7 @@ def render(s, reserved=False, family=None, bare=False):
                 }
             ]
         elif family == "shared-times":
-            s.add("and", "JOIN")
+            s.add("i", "JOIN")
             end = clock(s)
             return Specification(
                 family,

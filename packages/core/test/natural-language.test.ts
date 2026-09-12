@@ -15,22 +15,22 @@ beforeAll(async () => {
 afterAll(() => parser.dispose());
 
 it.each([
-  ["set an alarm for eight forty", "2026-09-09T08:40:00+00:00"],
-  ["ten thirty-five pm", "2026-09-09T22:35:00+00:00"],
-  ["seven o'clock", "2026-09-09T07:00:00+00:00"],
-  ["half past seven", "2026-09-09T07:30:00+00:00"],
-  ["quarter past nine", "2026-09-09T09:15:00+00:00"],
-  ["quarter to six", "2026-09-09T05:45:00+00:00"],
-  ["quarter to twelve am", "2026-09-09T23:45:00+00:00"],
-  ["eight in the morning", "2026-09-09T08:00:00+00:00"],
-  ["six in the evening", "2026-09-09T18:00:00+00:00"],
-  ["ten at night", "2026-09-09T22:00:00+00:00"],
-  ["twelve at night", "2026-09-09T00:00:00+00:00"],
-  ["in two days and six hours", "2026-09-11T06:00:00+00:00"],
-  ["in half an hour", "2026-09-09T00:30:00+00:00"],
-  ["I'll be back on the 15th", "2026-09-15T00:00:00+00:00"],
-  ["book dinner for October 2 at eight pm", "2026-10-02T20:00:00+00:00"],
-  ["1st Friday of next month", "2026-10-02T00:00:00+00:00"],
+  ["postavi alarm za osam i petnaest", "2026-09-09T08:15:00+00:00"],
+  ["deset i trideset pet popodne", "2026-09-09T22:35:00+00:00"],
+  ["sedam", "2026-09-09T07:00:00+00:00"],
+  ["sedam i po", "2026-09-09T07:30:00+00:00"],
+  ["devet i petnaest", "2026-09-09T09:15:00+00:00"],
+  ["četvrt do šest", "2026-09-09T05:45:00+00:00"],
+  ["četvrt do dvanaest ujutru", "2026-09-09T23:45:00+00:00"],
+  ["osam ujutru", "2026-09-09T08:00:00+00:00"],
+  ["šest uveče", "2026-09-09T18:00:00+00:00"],
+  ["deset noću", "2026-09-09T22:00:00+00:00"],
+  ["dvanaest noću", "2026-09-09T00:00:00+00:00"],
+  ["za dva dana i šest sati", "2026-09-11T06:00:00+00:00"],
+  ["za pola sata", "2026-09-09T00:30:00+00:00"],
+  ["biću ovde 15.", "2026-09-15T00:00:00+00:00"],
+  ["zakaži večeru za 2. oktobar u osam popodne", "2026-10-02T20:00:00+00:00"],
+  ["prvi petak sledeći mesec", "2026-10-02T00:00:00+00:00"],
   ["21/04/2016", "2016-04-21T00:00:00+00:00"],
   ["04/21/2016", "2016-04-21T00:00:00+00:00"],
 ])("resolves %s", async (text, start) => {
@@ -44,35 +44,35 @@ it.each([
 
 it.each([
   [
-    "for three hours and thirty minutes",
+    "za tri sata i trideset minuta",
     "2026-09-09T00:00:00+00:00",
     "2026-09-09T03:30:00+00:00",
   ],
   [
-    "for an hour and a half",
+    "za sat i po",
     "2026-09-09T00:00:00+00:00",
     "2026-09-09T01:30:00+00:00",
   ],
-  ["for 2.5 hours", "2026-09-09T00:00:00+00:00", "2026-09-09T02:30:00+00:00"],
+  ["za 2.5 sata", "2026-09-09T00:00:00+00:00", "2026-09-09T02:30:00+00:00"],
   [
-    "from September 4 through September 8",
+    "od 4. septembar do 8. septembar",
     "2026-09-04T00:00:00+00:00",
     "2026-09-09T00:00:00+00:00",
   ],
   [
-    "Friday the 11th until Tuesday the 15th",
+    "petak 11. do utorak 15.",
     "2026-09-11T00:00:00+00:00",
     "2026-09-16T00:00:00+00:00",
   ],
   [
-    "Friday at 10pm until Saturday at 2am",
+    "petak u 10popodne do subota u 2ujutru",
     "2026-09-11T22:00:00+00:00",
     "2026-09-12T02:00:00+00:00",
   ],
-  ["this September", "2026-09-01T00:00:00+00:00", "2026-10-01T00:00:00+00:00"],
-  ["next month", "2026-10-01T00:00:00+00:00", "2026-11-01T00:00:00+00:00"],
+  ["ovaj septembar", "2026-09-01T00:00:00+00:00", "2026-10-01T00:00:00+00:00"],
+  ["sledeći mesec", "2026-10-01T00:00:00+00:00", "2026-11-01T00:00:00+00:00"],
   [
-    "the first week of October",
+    "prva nedelja od oktobar",
     "2026-10-01T00:00:00+00:00",
     "2026-10-08T00:00:00+00:00",
   ],
@@ -86,11 +86,11 @@ it.each([
 });
 
 it.each([
-  ["every other Friday", ["2026-09-11", "2026-09-25", "2026-10-09"]],
-  ["every two weeks on Tuesday", ["2026-09-15", "2026-09-29", "2026-10-13"]],
-  ["the last Friday of each month", ["2026-09-25", "2026-10-30", "2026-11-27"]],
+  ["svaki drugi petak", ["2026-09-11", "2026-09-25", "2026-10-09"]],
+  ["svaki drugi utorak", ["2026-09-15", "2026-09-29", "2026-10-13"]],
+  ["poslednji petak meseca", ["2026-09-25", "2026-10-30", "2026-11-27"]],
   [
-    "every Monday except the first Monday of the month",
+    "svaki ponedeljak osim prvi ponedeljak meseca",
     ["2026-09-14", "2026-09-21", "2026-09-28", "2026-10-12"],
   ],
 ])("expands %s", async (text, dates) => {
@@ -108,7 +108,7 @@ it.each([
 
 it("shares a weekday schedule across two clock points", async () => {
   const result = await parser.parse(
-    "every weekday at nine am and five pm",
+    "svaki radni dan u devet ujutru i pet popodne",
     context,
   );
   expect(result.occurrences.slice(0, 4).map((value) => value.start)).toEqual([
@@ -121,7 +121,7 @@ it("shares a weekday schedule across two clock points", async () => {
 });
 
 it("keeps a weekday recurrence's inclusive end bound", async () => {
-  const result = await parser.parse("weekdays at nine until December 20", {
+  const result = await parser.parse("svaki radni dan u devet do 20. decembar", {
     ...context,
     reference: "2026-12-17T00:00:00Z",
   });
@@ -188,19 +188,24 @@ it("exports repeating monthly exclusions beyond the preview", () => {
 });
 
 it("uses the caller's date order for ambiguous numeric dates", async () => {
-  const dmy = await defineParser({ backend: "cpu", dateOrder: "DMY" });
+  const dayFirst = await defineParser({ backend: "cpu", dateOrder: "DMY" });
+  const monthFirst = await defineParser({ backend: "cpu", dateOrder: "MDY" });
   try {
-    const european = await dmy.parse("03/04/2027", context);
-    const american = await parser.parse("03/04/2027", context);
+    const european = await dayFirst.parse("03/04/2027", context);
+    const american = await monthFirst.parse("03/04/2027", context);
     expect(european.occurrences[0].start).toBe("2027-04-03T00:00:00+00:00");
     expect(american.occurrences[0].start).toBe("2027-03-04T00:00:00+00:00");
   } finally {
-    dmy.dispose();
+    dayFirst.dispose();
+    monthFirst.dispose();
   }
 });
 
 it("keeps the original compact multi-day input", async () => {
-  const result = await parser.parse("Sat Sun 1pm-8pm Mon 10pm-12am", context);
+  const result = await parser.parse(
+    "Sub Ned 1popodne-8popodne Pon 10popodne-12ujutru",
+    context,
+  );
   expect(result.occurrences.map(({ start, end }) => [start, end])).toEqual([
     ["2026-09-12T13:00:00+00:00", "2026-09-12T20:00:00+00:00"],
     ["2026-09-13T13:00:00+00:00", "2026-09-13T20:00:00+00:00"],
@@ -228,20 +233,20 @@ it("resolves explicit cross-date clocks through a DST change", () => {
 });
 
 it.each([
-  ["please set an alarm for six twenty-seven pm", "18:27:00"],
-  ["remind me at eleven forty-two", "11:42:00"],
-  ["schedule a call for half past four pm", "16:30:00"],
+  ["postavi alarm za šest i petnaest popodne", "18:15:00"],
+  ["podseti me u jedanaest i trideset pet", "11:35:00"],
+  ["zakaži poziv za šest i po popodne", "18:30:00"],
 ])("understands varied wording: %s", async (text, clock) => {
   const result = await parser.parse(text, context);
   expect(result.occurrences).toHaveLength(1);
   expect(result.occurrences[0].start.slice(11, 19)).toBe(clock);
 });
 
-it.each(["-", "to", "until"])(
+it.each(["-", "do"])(
   "allows equal clocks on different explicit dates (%s)",
   async (separator) => {
     const result = await parser.parse(
-      `17 August 2013 2pm ${separator} 19 August 2013 2pm`,
+      `17. avgust 2013. 2popodne ${separator} 19. avgust 2013. 2popodne`,
       { ...context, timeZone: "Asia/Dhaka" },
     );
     expect(
@@ -261,7 +266,7 @@ it.each([17, 16])(
   "rejects an equal or reversed full datetime range ending August %i",
   async (day) => {
     const result = await parser.parse(
-      `17 August 2013 2pm - ${day} August 2013 2pm`,
+      `17. avgust 2013. 2popodne - ${day}. avgust 2013. 2popodne`,
       context,
     );
     expect(result.occurrences).toEqual([]);

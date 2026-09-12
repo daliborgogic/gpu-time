@@ -1,9 +1,9 @@
 import type { ParseResult } from "gpu-time";
 
-export const example = "Every Monday from 8pm to 10pm";
+export const example = "Svaki ponedeljak od 8popodne do 10popodne";
 
 // The code block hardcodes `example`'s output, so the demo carries its own.
-export const demoDefault = "book dinner for October 2 at eight pm";
+export const demoDefault = "zakaži večeru za 2. oktobar u osam popodne";
 
 export type Kind = "date" | "time" | "repeat" | "duration";
 export interface Part {
@@ -12,61 +12,81 @@ export interface Part {
 }
 
 export const kinds: { kind: Kind; label: string }[] = [
-  { kind: "date", label: "Day or Date" },
-  { kind: "time", label: "Clock Time" },
-  { kind: "repeat", label: "Repeats" },
-  { kind: "duration", label: "How Long" },
+  { kind: "date", label: "Dan ili datum" },
+  { kind: "time", label: "Vreme na satu" },
+  { kind: "repeat", label: "Ponavljanje" },
+  { kind: "duration", label: "Trajanje" },
 ];
 
 export const examples: { use: string; text: string }[] = [
-  { use: "A reminder", text: "tomorrow at 9am" },
+  { use: "Podsetnik", text: "sutra u 9ujutru" },
   {
-    use: "Dinner, mid-sentence",
-    text: "book dinner for October 2 at eight pm",
+    use: "Večera, u sred rečenice",
+    text: "zakaži večeru za 2. oktobar u osam popodne",
   },
-  { use: "Standup", text: "every weekday at nine am" },
-  { use: "Overnight shift", text: "Friday at 10pm until Saturday at 2am" },
-  { use: "A trip", text: "from Sep 4 through September 8" },
-  { use: "Payday", text: "the last Friday of each month" },
-  { use: "Two-week cycle", text: "every other Friday at noon" },
-  { use: "A timer", text: "in 20 minutes for half an hour" },
+  { use: "Sastanak", text: "svaki radni dan u devet ujutru" },
+  { use: "Noćna smena", text: "petak u 10popodne do subota u 2ujutru" },
+  { use: "Putovanje", text: "od 4. septembar do 8. septembar" },
+  { use: "Plata", text: "poslednji petak svakog meseca" },
+  { use: "Dvonedeljni ciklus", text: "svaka druga petak u podne" },
+  { use: "Odbrojavanje", text: "za 20 minuta za pola sata" },
 ];
 
-const hour = "one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve";
+const boundary = "(?<![\\p{L}\\d])";
+const boundaryEnd = "(?![\\p{L}\\d])";
+const hour =
+  "jedan|dva|tri|četiri|pet|šest|sedam|osam|devet|deset|jedanaest|dvanaest";
+const meridiem = "ujutru|izjutra|popodne|uveče|uvece|noću|nocu";
+
 const patterns: [Kind, RegExp][] = [
   [
     "repeat",
-    /\b(every other|every|each|all|weekdays?|weekends?|daily|weekly|biweekly|monthly|yearly|annually|except)\b/gi,
+    new RegExp(
+      `${boundary}(svaki drugi|svaki|svake|svakog|poslednji|radni dan|radni dani|vikend|vikendi|dnevno|svakodnevno|nedeljno|sedmično|sedmicno|dvonedeljno|petnaestodnevno|mesečno|mesecno|godišnje|godisnje|osim)${boundaryEnd}`,
+      "giu",
+    ),
   ],
   [
     "duration",
-    /\b(for|in)\s+(an?|half an?|\d+(\.\d+)?)\s*(and a half\s+)?(hours?|hrs?|minutes?|mins?|days?|weeks?|months?)\b/gi,
-  ],
-  [
-    "time",
     new RegExp(
-      `\\b(from\\s+)?(\\d{1,2}(:\\d{2})?|${hour})\\s*(am|pm)?\\s*(-|–|to|until|till|through)\\s*(\\d{1,2}(:\\d{2})?|${hour})\\s*(am|pm)?\\b`,
-      "gi",
+      `${boundary}(za|kroz)\\s+(pola|četvrt|jedan|jedna|\\d+(\\.\\d+)?)\\s*(i\\s+po\\s+)?(sati?|sata|minuta?|minut|dana?|dan|nedelj[ae]|sedmic[ae]|mesec[a]?|godin[ae])${boundaryEnd}`,
+      "giu",
     ),
   ],
   [
     "time",
     new RegExp(
-      `\\b(at\\s+)?(\\d{1,2}(:\\d{2})?|${hour})\\s*(am|pm|o'?clock)\\b|\\b(noon|midnight|morning|afternoon|evening|midday)\\b|\\b(half past|quarter (to|past))\\s+\\S+`,
-      "gi",
+      `${boundary}(od\\s+)?(\\d{1,2}(:\\d{2})?|${hour})\\s*(${meridiem})?\\s*(-|–|do|pre)\\s*(\\d{1,2}(:\\d{2})?|${hour})\\s*(${meridiem})?${boundaryEnd}`,
+      "giu",
+    ),
+  ],
+  [
+    "time",
+    new RegExp(
+      `${boundary}(u\\s+)?(\\d{1,2}(:\\d{2})?|${hour})\\s*(${meridiem})${boundaryEnd}|${boundary}(podne|ponoć|ponoc|jutro|popodne|veče|vece|noć|noc)${boundaryEnd}|${boundary}(pola|četvrt)\\s+(do|pre)\\s+\\S+`,
+      "giu",
     ),
   ],
   [
     "date",
-    /\b((mon|tues?|wednes|thurs?|fri|satur|sun)day|mon|tue|wed|thu|fri|sat|sun)\b/gi,
+    new RegExp(
+      `${boundary}(ponedeljak|utorak|sreda|četvrtak|petak|subota|nedelja|pon|uto|sre|čet|pet|sub|ned)${boundaryEnd}`,
+      "giu",
+    ),
   ],
   [
     "date",
-    /\b(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?\s*\d{0,2}(st|nd|rd|th)?\b/gi,
+    new RegExp(
+      `${boundary}(januar|februar|mart|april|maj|jun|jul|avgust|septembar|oktobar|novembar|decembar|jan|feb|mar|apr|avg|sep|okt|nov|dec)[\\p{L}]*\\.?\\s*\\d{0,2}\\.?${boundaryEnd}`,
+      "giu",
+    ),
   ],
   [
     "date",
-    /\b(today|tomorrow|tonight|yesterday)\b|\b(next|this|last|first|second|third|fourth)\s+\S+|\b\d{1,2}(st|nd|rd|th)\b|\b\d{1,2}\/\d{1,2}(\/\d{2,4})?\b/gi,
+    new RegExp(
+      `${boundary}(danas|sutra|večeras|veceras|noćas|nocas|juče|jučer|juce|prekosutra|prekjuče|prekjuce)${boundaryEnd}|${boundary}(sledeć[ai]|sledeca|naredn[ai]|prošl[ai]|proslim|prethodn[ai]|ova[j]?|ov[oa])\\s+\\S+|${boundary}\\d{1,2}\\.${boundaryEnd}|${boundary}\\d{1,2}\\/\\d{1,2}(\\/\\d{2,4})?${boundaryEnd}`,
+      "giu",
+    ),
   ],
 ];
 
@@ -95,14 +115,14 @@ export function highlight(text: string): Part[] {
 }
 
 export function format(result: ParseResult, reference: Date, timeZone: string) {
-  const dateFormat = new Intl.DateTimeFormat("en-US", {
+  const dateFormat = new Intl.DateTimeFormat("sr-Latn-RS", {
     timeZone,
     weekday: "short",
     month: "short",
     day: "numeric",
     year: "numeric",
   });
-  const timeFormat = new Intl.DateTimeFormat("en-US", {
+  const timeFormat = new Intl.DateTimeFormat("sr-Latn-RS", {
     timeZone,
     hour: "numeric",
     minute: "2-digit",
@@ -111,23 +131,23 @@ export function format(result: ParseResult, reference: Date, timeZone: string) {
     ? result.diagnostics.map((diagnostic) => diagnostic.message).join(" ")
     : result.occurrences.length
       ? result.truncated
-        ? `Next ${result.occurrences.length} occurrences`
-        : "Result"
-      : "No dates found. Try a date or a time window.";
+        ? `Sledeća ${result.occurrences.length} termina`
+        : "Rezultat"
+      : "Nema pronađenih datuma. Probajte datum ili vremenski period.";
 
   const rows = result.occurrences.map((occurrence) => {
     const start = new Date(occurrence.start);
     const end = occurrence.end ? new Date(occurrence.end) : start;
     let time: string;
     if (!occurrence.end) {
-      time = occurrence.allDay ? "All day" : timeFormat.format(start);
+      time = occurrence.allDay ? "Ceo dan" : timeFormat.format(start);
     } else if (occurrence.allDay) {
       // Date-only ranges have an exclusive end at the next midnight.
       const lastDay = new Date(end.getTime() - 1);
       time =
         dateFormat.format(start) === dateFormat.format(lastDay)
-          ? "All day"
-          : `Through ${dateFormat.format(lastDay)} · all day`;
+          ? "Ceo dan"
+          : `Do ${dateFormat.format(lastDay)} · ceo dan`;
     } else {
       const endDate =
         dateFormat.format(start) === dateFormat.format(end)
@@ -141,6 +161,6 @@ export function format(result: ParseResult, reference: Date, timeZone: string) {
   return {
     status,
     rows,
-    context: `Relative to ${dateFormat.format(reference)} · ${timeZone}`,
+    context: `U odnosu na ${dateFormat.format(reference)} · ${timeZone}`,
   };
 }
