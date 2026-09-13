@@ -8,9 +8,8 @@ const training = join(packageRoot, "..", "training");
 
 const read = async (name: string) =>
   JSON.parse(await readFile(join(resultsDir, `${name}.json`), "utf8"));
-const [browser, python, sizes, structure] = await Promise.all([
+const [browser, sizes, structure] = await Promise.all([
   read("browser"),
-  read("python"),
   read("size"),
   read("model-structure"),
 ]);
@@ -92,10 +91,8 @@ const summary = {
   environment: browser.environment,
   method: browser.method,
   limitations: [
-    "Native outputs differ: gpu-time returns resolved dates, ranges and recurrence rules; other libraries return components, dates, TIMEX or recurrence constraints. Speed is not feature equivalence.",
     "The four-input batch workload includes unsupported inputs. Reported thrown-error counts do not include silent partial parses or abstentions.",
     "Internal interpretation checks and direct-result fixtures are development checks. Sets overlap and are not a final independent accuracy benchmark.",
-    "Cross-library comparison against Microsoft Recognizers-Text's English development corpus is disabled: gpu-time is Serbian-only now, and that corpus was never something it's meant to understand. See MODEL_CARD.md's Evaluation section.",
     "The complete gpu-time library exceeds its 30,000-byte Brotli budget.",
   ],
   performance,
@@ -166,26 +163,11 @@ lines.push(
 );
 lines.push(
   "",
-  "## Independent source cases",
+  "## Synthetic AST check",
   "",
-  "Microsoft Recognizers-Text's English development corpus is no longer scored here: gpu-time is a Serbian-only parser now, and those test cases were never something it's meant to understand. `external.ts` and `fetch-recognizers.ts` are kept for reference but are not run by default — see MODEL_CARD.md's Evaluation section.",
-  "",
-  `The separate synthetic AST check scores **${semantic.correct}/${semantic.total}**. Its expected ASTs are sampled before rendering, and all ${semantic.total} renderer/oracle pairs pass compiler equality. Fresh values share training rendering families, so this is a development check rather than independent language accuracy.`,
+  `Scores **${semantic.correct}/${semantic.total}**. Its expected ASTs are sampled before rendering, and all ${semantic.total} renderer/oracle pairs pass compiler equality. Fresh values share training rendering families, so this is a development check rather than independent language accuracy.`,
   "",
 );
-lines.push(
-  "",
-  "## Python parsing time",
-  "",
-  python.method,
-  "",
-  "| Library | Version | Single p50 (µs) | Single p95 (µs) |",
-  "|---|---|---:|---:|",
-);
-for (const row of python.results)
-  lines.push(
-    `| ${row.library} | ${row.version} | ${(row.single.p50Ms * 1000).toFixed(1)} | ${(row.single.p95Ms * 1000).toFixed(1)} |`,
-  );
 lines.push(
   "",
   "## Browser bundle size",
@@ -218,7 +200,7 @@ lines.push(
   "",
   "## Actual adversarial outputs",
   "",
-  "Normalized occurrences/rules are shown when the adapter can represent them. Otherwise the native output is preserved. An output is not necessarily correct. Full native payloads are in [browser.json](browser.json) and [python.json](python.json).",
+  "Normalized occurrences/rules are shown when the adapter can represent them. Otherwise the native output is preserved. An output is not necessarily correct. Full native payloads are in [browser.json](browser.json).",
   "",
 );
 const primary = (browser.results as BrowserRow[]).find(
@@ -239,10 +221,6 @@ for (const example of primary?.outputs ?? []) {
         ? { occurrences: output.occurrences, rrules: output.rrules }
         : (output?.raw ?? row.error ?? null));
     lines.push(`| ${names[row.library]} | ${cell(value)} |`);
-  }
-  for (const row of python.results) {
-    const output = row.outputs.find((value: Output) => value.id === example.id);
-    lines.push(`| ${row.library} | ${cell(output.error ?? output.raw)} |`);
   }
   lines.push("");
 }

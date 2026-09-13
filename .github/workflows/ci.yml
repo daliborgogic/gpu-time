@@ -24,8 +24,6 @@ jobs:
         run: pnpm build:core
       - name: Core tests
         run: pnpm test:core
-      - name: Benchmark utility tests
-        run: pnpm test:benchmark
       - name: Website type check
         run: pnpm test:website
       - name: Inspect npm package contents

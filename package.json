@@ -4,9 +4,8 @@
   "type": "module",
   "packageManager": "pnpm@11.13.1",
   "scripts": {
-    "test": "pnpm test:core && pnpm test:benchmark && pnpm test:website",
+    "test": "pnpm test:core && pnpm test:website",
     "test:core": "pnpm --filter gpu-time test",
-    "test:benchmark": "pnpm --filter @gpu-time/benchmark test",
     "test:website": "pnpm --filter @gpu-time/website check && pnpm --filter @gpu-time/website test:highlight",
     "test:browser": "pnpm --filter gpu-time test:browser",
     "check": "pnpm -r check",

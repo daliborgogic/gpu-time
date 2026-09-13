@@ -56,25 +56,7 @@ if (refreshCorpus || !existsSync(join(synth, "semantic-checks.jsonl")))
   python(join(training, "torch", "generate-semantic.py"));
 node(join(training, "src", "check-semantic.ts"));
 node(join(training, "src", "evaluate-semantic.ts"));
-// fetch-recognizers.ts and external.ts score gpu-time against Microsoft
-// Recognizers-Text's own English test corpus. Since gpu-time became a
-// Serbian-only parser, that comparison no longer measures anything
-// meaningful (the English test cases were never something this parser is
-// meant to understand) — disabled rather than translated. The code and data
-// stay for reference; see MODEL_CARD.md's Evaluation section.
 node(join(here, "size.ts"));
-const venvPython = join(packageRoot, ".venv", "bin", "python");
-if (!existsSync(venvPython))
-  run("uv", ["venv", join(packageRoot, ".venv"), "--python", "3.13"]);
-run("uv", [
-  "pip",
-  "install",
-  "--python",
-  venvPython,
-  "-r",
-  join(packageRoot, "requirements.lock"),
-]);
-run(venvPython, [join(here, "sidecar.py")]);
 node(join(here, "perf.browser.ts"));
 node(join(here, "report.ts"));
 const elapsedSeconds = (performance.now() - started) / 1000;

@@ -9,11 +9,6 @@ const packageRoot = join(import.meta.dirname, "..");
 // Dev-only fixture read across packages, as the migration contract allows.
 const training = join(packageRoot, "..", "training");
 
-// chrono/compromise/recognizers/later are English-only and were disabled
-// here when gpu-time became a Serbian-only parser: timing them against
-// Serbian input measures how fast they fail to match, not a comparable
-// workload. rrule stays out too, since it never did natural-language
-// parsing — see MODEL_CARD.md's Evaluation section for the full rationale.
 const libraries = ["gpu-time-cpu", "gpu-time-webgpu"];
 const model = JSON.parse(
   await readFile(join(training, "active", "export-report.json"), "utf8"),

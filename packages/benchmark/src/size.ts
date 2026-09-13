@@ -11,13 +11,6 @@ const packageRoot = join(import.meta.dirname, "..");
 // the package's own exports map — the same entry point consumers get.
 const entries = {
   "gpu-time": 'export * from "gpu-time"',
-  chrono: 'export { en } from "chrono-node"',
-  compromise:
-    'import nlp from "compromise"; import dates from "compromise-dates"; export default nlp.extend(dates)',
-  rrule: 'export { RRule } from "rrule"',
-  recognizers:
-    'export { recognizeDateTime } from "@microsoft/recognizers-text-date-time"',
-  later: 'export { default } from "@breejs/later"',
 };
 const results = [];
 const temporary = await mkdtemp(join(tmpdir(), "gpu-time-size-"));
@@ -60,7 +53,7 @@ await writeFile(
   JSON.stringify(
     {
       method:
-        "Standalone minified browser ESM bundles, gzip level 9, Brotli quality 11. Exact import expressions included. Chrono uses its English entry; Recognizers' public entry includes its shipped language coverage.",
+        "Standalone minified browser ESM bundle, gzip level 9, Brotli quality 11. Exact import expression included.",
       imports: entries,
       versions: JSON.parse(
         await readFile(join(packageRoot, "package.json"), "utf8"),

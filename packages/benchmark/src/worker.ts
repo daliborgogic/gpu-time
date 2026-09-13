@@ -2,14 +2,6 @@ import type { Adapter } from "./types.ts";
 import { reference } from "./types.ts";
 
 const factories = {
-  chrono: () =>
-    import("./baselines/chrono.ts").then((module) => module.create()),
-  compromise: () =>
-    import("./baselines/compromise.ts").then((module) => module.create()),
-  rrule: () => import("./baselines/rrule.ts").then((module) => module.create()),
-  recognizers: () =>
-    import("./baselines/recognizers.ts").then((module) => module.create()),
-  later: () => import("./baselines/later.ts").then((module) => module.create()),
   "gpu-time-cpu": () =>
     import("./baselines/gpu-time.ts").then((module) => module.create("cpu")),
   "gpu-time-webgpu": () =>

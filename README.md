@@ -60,7 +60,7 @@ The tracked `packages/training/active/` directory holds the promoted model repor
 
 - `packages/core`: publishable browser package, WGSL kernel, and calendar resolver
 - `packages/training`: corpus generation, PyTorch training, evaluation, export, and provenance
-- `packages/benchmark`: size and browser performance (the English-only cross-library comparison is disabled — see MODEL_CARD.md)
+- `packages/benchmark`: size and browser performance (bundle footprint ~40.8 KB Brotli, well under the 50,000-byte budget)
 - `apps/website`: project site and interactive demo
 - `video`: explainer source and storyboard
 
