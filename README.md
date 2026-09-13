@@ -60,7 +60,7 @@ The tracked `packages/training/active/` directory holds the promoted model repor
 
 - `packages/core`: publishable browser package, WGSL kernel, and calendar resolver
 - `packages/training`: corpus generation, PyTorch training, evaluation, export, and provenance
-- `packages/benchmark`: size, browser performance, and cross-library comparisons
+- `packages/benchmark`: size and browser performance (the English-only cross-library comparison is disabled — see MODEL_CARD.md)
 - `apps/website`: project site and interactive demo
 - `video`: explainer source and storyboard
 

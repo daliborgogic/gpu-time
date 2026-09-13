@@ -36,10 +36,11 @@ for (const example of base) {
       text: " \t" + example.text.replace(/\s+/g, "  ") + "\n",
     },
     {
+      // \b is ASCII-only and misses words starting with š/č/ć/ž/đ entirely.
       kind: "abbreviated",
       text: example.text.replace(
-        /\b(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|January|February|March|April|June|July|August|September|October|November|December)(s?)\b/gi,
-        (_word, name: string) => name.slice(0, 3),
+        /(?<![\p{L}\d])(ponedeljak|utorak|sreda|četvrtak|petak|subota|nedelja|januar|februar|mart|april|maj|jun|jul|avgust|septembar|oktobar|novembar|decembar)(?![\p{L}\d])/giu,
+        (name: string) => name.slice(0, 3),
       ),
     },
   ];

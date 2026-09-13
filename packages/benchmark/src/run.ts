@@ -56,9 +56,12 @@ if (refreshCorpus || !existsSync(join(synth, "semantic-checks.jsonl")))
   python(join(training, "torch", "generate-semantic.py"));
 node(join(training, "src", "check-semantic.ts"));
 node(join(training, "src", "evaluate-semantic.ts"));
-if (!existsSync(join(packageRoot, "data", "recognizers", "cases.jsonl")))
-  node(join(here, "fetch-recognizers.ts"));
-node(join(here, "external.ts"));
+// fetch-recognizers.ts and external.ts score gpu-time against Microsoft
+// Recognizers-Text's own English test corpus. Since gpu-time became a
+// Serbian-only parser, that comparison no longer measures anything
+// meaningful (the English test cases were never something this parser is
+// meant to understand) — disabled rather than translated. The code and data
+// stay for reference; see MODEL_CARD.md's Evaluation section.
 node(join(here, "size.ts"));
 const venvPython = join(packageRoot, ".venv", "bin", "python");
 if (!existsSync(venvPython))

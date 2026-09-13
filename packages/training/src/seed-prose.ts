@@ -8,39 +8,39 @@ const window = (start: number, end: number): Clause => ({
   time: { start: { hour: start, minute: 0 }, end: { hour: end, minute: 0 } },
 });
 const cases: [string, Clause | null][] = [
-  ["I'll be out between 5 and 6pm", window(17, 18)],
-  ["I'll be out from 1am to 5pm", window(1, 17)],
-  ["We'll be available from 9am to 5pm", window(9, 17)],
+  ["biću odsutan između 5 i 6popodne", window(17, 18)],
+  ["biću odsutan od 1ujutru do 5popodne", window(1, 17)],
+  ["bićemo dostupni od 9ujutru do 5popodne", window(9, 17)],
   [
-    "The library is open from 10am to noon",
+    "biblioteka je otvorena od 10ujutru do podne",
     { time: { start: { hour: 10, minute: 0 }, end: { named: "noon" } } },
   ],
   [
-    "The office is closed from 10pm to midnight",
+    "kancelarija je zatvorena od 10popodne do ponoć",
     { time: { start: { hour: 22, minute: 0 }, end: { named: "midnight" } } },
   ],
-  ["Could you set an alarm for 8am", at(8)],
+  ["možeš li postaviti alarm za 8ujutru", at(8)],
   [
-    "Please set an alarm for 7:30am",
+    "molim te postavi alarm za 7:30ujutru",
     { time: { start: { hour: 7, minute: 30 } } },
   ],
   [
-    "Can you book room 24 for tomorrow at 3pm",
+    "možeš li rezervisati sobu 24 za sutra u 3popodne",
     { date: { kind: "relativeDay", offset: 1 }, ...at(15) },
   ],
   [
-    "The appointment is scheduled for Friday at noon",
+    "sastanak je zakazan za petak u podne",
     {
       date: { kind: "weekday", days: ["FR"] },
       time: { start: { named: "noon" } },
     },
   ],
   [
-    "The interview starts Monday at 2pm",
+    "intervju počinje ponedeljak u 2popodne",
     { date: { kind: "weekday", days: ["MO"] }, ...at(14) },
   ],
   [
-    "Our clinic opens every weekday at 8am",
+    "naša klinika se otvara svaki radni dan u 8ujutru",
     {
       recurrence: {
         freq: "weekly",
@@ -51,39 +51,39 @@ const cases: [string, Clause | null][] = [
     },
   ],
   [
-    "Please schedule a call for every other Tuesday at 11am",
+    "molim te zakaži poziv za svaki drugi utorak u 11ujutru",
     { recurrence: { freq: "weekly", interval: 2, byDay: ["TU"] }, ...at(11) },
   ],
   [
-    "The lesson is scheduled for June 12",
+    "čas je zakazan za jun 12",
     { date: { kind: "calendar", month: 6, day: 12 } },
   ],
   [
-    "They'll be back in two hours",
+    "vratiću se kroz dva sata",
     { shift: { amount: 2, unit: "hour", direction: "after" } },
   ],
   [
-    "I'd like to schedule a meeting for tomorrow",
+    "hteo bih da zakažem sastanak za sutra",
     { date: { kind: "relativeDay", offset: 1 } },
   ],
   [
-    "Please remind me about Christmas",
+    "molim te podseti me na Božić",
     { date: { kind: "holiday", name: "christmas" } },
   ],
   [
-    "The meeting is scheduled for next week",
-    { date: { kind: "relativeUnit", unit: "week", modifier: "next" } },
+    "sastanak je zakazan za sledeći mesec",
+    { date: { kind: "relativeUnit", unit: "month", modifier: "next" } },
   ],
   [
-    "Please book room 17 from Monday to Wednesday",
+    "molim te rezerviši sobu 17 od ponedeljak do sreda",
     { date: { kind: "weekdayRange", from: "MO", to: "WE" } },
   ],
-  ["The library is closed for repairs.", null],
-  ["Please set an alarm for the experiment.", null],
-  ["Can you book room 24 for the team?", null],
-  ["The interview is about our second product.", null],
-  ["I'll be out of the office for personal reasons.", null],
-  ["Our clinic is open for questions.", null],
+  ["biblioteka je zatvorena zbog popravke.", null],
+  ["molim te postavi alarm za eksperiment.", null],
+  ["možeš li rezervisati sobu 24 za tim?", null],
+  ["intervju je o našem drugom proizvodu.", null],
+  ["biću odsutan iz kancelarije zbog privatnih razloga.", null],
+  ["naša klinika je otvorena za pitanja.", null],
 ];
 
 writeFileSync(

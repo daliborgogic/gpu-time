@@ -27,8 +27,8 @@ export const examples: { use: string; text: string }[] = [
   { use: "Sastanak", text: "svaki radni dan u devet ujutru" },
   { use: "Noćna smena", text: "petak u 10popodne do subota u 2ujutru" },
   { use: "Putovanje", text: "od 4. septembar do 8. septembar" },
-  { use: "Plata", text: "poslednji petak svakog meseca" },
-  { use: "Dvonedeljni ciklus", text: "svaka druga petak u podne" },
+  { use: "Plata", text: "poslednji petak meseca" },
+  { use: "Dvonedeljni ciklus", text: "svaki drugi petak u podne" },
   { use: "Odbrojavanje", text: "za 20 minuta za pola sata" },
 ];
 
@@ -77,7 +77,7 @@ const patterns: [Kind, RegExp][] = [
   [
     "date",
     new RegExp(
-      `${boundary}(januar|februar|mart|april|maj|jun|jul|avgust|septembar|oktobar|novembar|decembar|jan|feb|mar|apr|avg|sep|okt|nov|dec)[\\p{L}]*\\.?\\s*\\d{0,2}\\.?${boundaryEnd}`,
+      `${boundary}(?:\\d{1,2}\\.\\s*)?(januar|februar|mart|april|maj|jun|jul|avgust|septembar|oktobar|novembar|decembar|jan|feb|mar|apr|avg|sep|okt|nov|dec)[\\p{L}]*\\.?\\s*\\d{0,2}\\.?${boundaryEnd}`,
       "giu",
     ),
   ],

@@ -489,7 +489,7 @@ function compileDateAndTime(
           text += tokens[++index].text.toLowerCase();
         const group = /^(vikend|vikendi|vikendom)$/.test(text)
           ? "weekend"
-          : /^(radnidan|radnidani|radnimdanima|radnadana)$/.test(text)
+          : /^(radnidan|radnidani|radnimdanima|radnihdana)$/.test(text)
             ? "weekday"
             : undefined;
         if (!group) fail(token, "unsupported", "Unknown day group.");
@@ -531,11 +531,13 @@ function compileDateAndTime(
       }
 
       case Role.TIME_NAMED:
-        if (!["podne", "ponoć", "ponoc"].includes(word))
+        if (!["podne", "ponoć", "ponoc", "ponoći", "ponoci"].includes(word))
           fail(token, "unsupported", "Unknown named clock time.");
         clocks.push({
           value: {
-            named: ["ponoć", "ponoc"].includes(word) ? "midnight" : "noon",
+            named: ["ponoć", "ponoc", "ponoći", "ponoci"].includes(word)
+              ? "midnight"
+              : "noon",
           },
           token,
           needsMeridiem: false,

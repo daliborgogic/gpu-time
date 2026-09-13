@@ -1,12 +1,12 @@
 {
-  "model": "c69ab6c9be8ec854790c004b5d540dc6a41bececbacdbf34a4725de6b711d6d5",
-  "sourceSha256": "560e2762d900aef72fefd60f15e5aa62e6b5c50208e6c6d59f18c23a3c788b5b",
-  "total": 18,
-  "correct": 18,
+  "model": "b186a201db5970687c090794b7b9ac7a7b2ba2d8df47fe4d1127284843db33cd",
+  "sourceSha256": "76112aa1918322f059d2fc6bccfaf19aede349a6cda9cece95ed868691ac9de3",
+  "total": 17,
+  "correct": 17,
   "cases": [
     {
       "id": "result-001",
-      "text": "one day after",
+      "text": "jedan dan posle",
       "context": {
         "reference": "2026-09-09T12:00:00+06:00",
         "timeZone": "Asia/Dhaka"
@@ -29,16 +29,16 @@
         "diagnostics": [],
         "backend": "cpu",
         "timings": {
-          "tokenizeMs": 0.49962500000000176,
-          "inferMs": 1.2708750000000038,
-          "resolveMs": 0.8836670000000026
+          "tokenizeMs": 0.749541999999991,
+          "inferMs": 2.7935419999999738,
+          "resolveMs": 1.2068749999999966
         }
       },
       "correct": true
     },
     {
       "id": "result-002",
-      "text": "today",
+      "text": "danas",
       "context": {
         "reference": "2026-09-09T12:00:00+06:00",
         "timeZone": "Asia/Dhaka"
@@ -61,16 +61,16 @@
         "diagnostics": [],
         "backend": "cpu",
         "timings": {
-          "tokenizeMs": 0.015584000000004039,
-          "inferMs": 0.20049999999999812,
-          "resolveMs": 0.289082999999998
+          "tokenizeMs": 0.024041999999980135,
+          "inferMs": 0.5374589999999841,
+          "resolveMs": 0.39758400000002325
         }
       },
       "correct": true
     },
     {
       "id": "result-003",
-      "text": "tomorrow at 3pm",
+      "text": "sutra u 3popodne",
       "context": {
         "reference": "2026-09-09T12:00:00+06:00",
         "timeZone": "Asia/Dhaka"
@@ -93,16 +93,16 @@
         "diagnostics": [],
         "backend": "cpu",
         "timings": {
-          "tokenizeMs": 0.04512499999999875,
-          "inferMs": 0.9305000000000021,
-          "resolveMs": 0.22208399999998818
+          "tokenizeMs": 0.05920800000001236,
+          "inferMs": 6.369417000000027,
+          "resolveMs": 1.2779160000000331
         }
       },
       "correct": true
     },
     {
       "id": "result-004",
-      "text": "the day after tomorrow at noon",
+      "text": "prekosutra u podne",
       "context": {
         "reference": "2026-09-09T12:00:00+06:00",
         "timeZone": "Asia/Dhaka"
@@ -125,16 +125,16 @@
         "diagnostics": [],
         "backend": "cpu",
         "timings": {
-          "tokenizeMs": 0.015999999999998238,
-          "inferMs": 1.0580420000000004,
-          "resolveMs": 0.10620899999999978
+          "tokenizeMs": 0.06845799999999258,
+          "inferMs": 1.9020000000000152,
+          "resolveMs": 0.28016600000000835
         }
       },
       "correct": true
     },
     {
       "id": "result-005",
-      "text": "two hours",
+      "text": "dva sata",
       "context": {
         "reference": "2026-09-09T12:00:00+06:00",
         "timeZone": "Asia/Dhaka"
@@ -159,50 +159,16 @@
         "diagnostics": [],
         "backend": "cpu",
         "timings": {
-          "tokenizeMs": 0.01304100000000119,
-          "inferMs": 0.290458000000001,
-          "resolveMs": 0.0991250000000008
+          "tokenizeMs": 0.5697079999999914,
+          "inferMs": 1.3331249999999955,
+          "resolveMs": 0.28199999999998226
         }
       },
       "correct": true
     },
     {
       "id": "result-006",
-      "text": "next week",
-      "context": {
-        "reference": "2026-09-09T12:00:00+06:00",
-        "timeZone": "Asia/Dhaka"
-      },
-      "occurrences": [
-        {
-          "start": "2026-09-14T00:00:00+06:00",
-          "allDay": true,
-          "end": "2026-09-21T00:00:00+06:00"
-        }
-      ],
-      "actual": {
-        "occurrences": [
-          {
-            "start": "2026-09-14T00:00:00+06:00",
-            "allDay": true,
-            "end": "2026-09-21T00:00:00+06:00"
-          }
-        ],
-        "rrules": [],
-        "truncated": false,
-        "diagnostics": [],
-        "backend": "cpu",
-        "timings": {
-          "tokenizeMs": 0.00808399999999665,
-          "inferMs": 0.2497499999999988,
-          "resolveMs": 0.23829200000000128
-        }
-      },
-      "correct": true
-    },
-    {
-      "id": "result-007",
-      "text": "2 hours before tomorrow at noon",
+      "text": "2 sata pre sutra u podne",
       "context": {
         "reference": "2026-09-09T12:00:00+06:00",
         "timeZone": "Asia/Dhaka"
@@ -225,16 +191,16 @@
         "diagnostics": [],
         "backend": "cpu",
         "timings": {
-          "tokenizeMs": 0.014666999999995767,
-          "inferMs": 0.8525409999999951,
-          "resolveMs": 0.09783299999999429
+          "tokenizeMs": 0.03129200000000765,
+          "inferMs": 2.4290829999999914,
+          "resolveMs": 0.158916999999974
         }
       },
       "correct": true
     },
     {
-      "id": "result-008",
-      "text": "Sat Sun 1pm-8pm Mon 10pm-12am",
+      "id": "result-007",
+      "text": "Sub Ned 1popodne-8popodne Pon 10popodne-12ujutru",
       "context": {
         "reference": "2026-09-09T12:00:00+06:00",
         "timeZone": "Asia/Dhaka"
@@ -279,16 +245,16 @@
         "diagnostics": [],
         "backend": "cpu",
         "timings": {
-          "tokenizeMs": 0.02891699999999986,
-          "inferMs": 0.3862090000000009,
-          "resolveMs": 0.290458000000001
+          "tokenizeMs": 0.0548740000000123,
+          "inferMs": 0.6800840000000221,
+          "resolveMs": 0.477958000000001
         }
       },
       "correct": true
     },
     {
-      "id": "result-009",
-      "text": "every Monday at 8pm",
+      "id": "result-008",
+      "text": "svaki ponedeljak u 8popodne",
       "context": {
         "reference": "2026-09-09T12:00:00+06:00",
         "timeZone": "Asia/Dhaka",
@@ -330,16 +296,16 @@
         "diagnostics": [],
         "backend": "cpu",
         "timings": {
-          "tokenizeMs": 0.009209000000005574,
-          "inferMs": 0.1683749999999975,
-          "resolveMs": 0.4816239999999965
+          "tokenizeMs": 0.015500000000002956,
+          "inferMs": 0.2935420000000022,
+          "resolveMs": 0.6512490000000071
         }
       },
       "correct": true
     },
     {
-      "id": "result-010",
-      "text": "every month on the 31st",
+      "id": "result-009",
+      "text": "svaki mesec 31.",
       "context": {
         "reference": "2026-09-09T12:00:00+06:00",
         "timeZone": "Asia/Dhaka",
@@ -381,16 +347,16 @@
         "diagnostics": [],
         "backend": "cpu",
         "timings": {
-          "tokenizeMs": 0.011333000000007587,
-          "inferMs": 0.19991699999999923,
-          "resolveMs": 0.2849170000000072
+          "tokenizeMs": 0.02504200000001333,
+          "inferMs": 0.22329099999998903,
+          "resolveMs": 0.5608339999999998
         }
       },
       "correct": true
     },
     {
-      "id": "result-011",
-      "text": "next Friday at 9am",
+      "id": "result-010",
+      "text": "sledeći petak u 9ujutru",
       "context": {
         "reference": "2026-09-09T12:00:00+06:00",
         "timeZone": "Asia/Dhaka"
@@ -413,16 +379,16 @@
         "diagnostics": [],
         "backend": "cpu",
         "timings": {
-          "tokenizeMs": 0.008748999999994567,
-          "inferMs": 0.2382910000000038,
-          "resolveMs": 0.08908400000001393
+          "tokenizeMs": 0.7659170000000017,
+          "inferMs": 0.2782500000000141,
+          "resolveMs": 0.09466700000001538
         }
       },
       "correct": true
     },
     {
-      "id": "result-012",
-      "text": "next Friday at 9am",
+      "id": "result-011",
+      "text": "sledeći petak u 9ujutru",
       "context": {
         "reference": "2026-09-09T12:00:00+06:00",
         "timeZone": "Asia/Dhaka",
@@ -446,16 +412,16 @@
         "diagnostics": [],
         "backend": "cpu",
         "timings": {
-          "tokenizeMs": 0.0073330000000026985,
-          "inferMs": 0.15708300000000008,
-          "resolveMs": 0.057916999999989116
+          "tokenizeMs": 0.007792000000023336,
+          "inferMs": 0.2588750000000175,
+          "resolveMs": 0.06495799999999008
         }
       },
       "correct": true
     },
     {
-      "id": "result-013",
-      "text": "tomorrow at 3pm",
+      "id": "result-012",
+      "text": "sutra u 3popodne",
       "context": {
         "reference": "2026-09-09T00:30:00+06:00",
         "timeZone": "America/New_York"
@@ -478,16 +444,16 @@
         "diagnostics": [],
         "backend": "cpu",
         "timings": {
-          "tokenizeMs": 0.0049169999999918446,
-          "inferMs": 0.10912500000000591,
-          "resolveMs": 0.058041000000002896
+          "tokenizeMs": 0.009458999999964135,
+          "inferMs": 0.2076669999999865,
+          "resolveMs": 0.1293749999999818
         }
       },
       "correct": true
     },
     {
-      "id": "result-014",
-      "text": "tomorrow at 1:30am",
+      "id": "result-013",
+      "text": "sutra u 1:30ujutru",
       "context": {
         "reference": "2026-10-31T12:00:00-04:00",
         "timeZone": "America/New_York"
@@ -510,16 +476,16 @@
         "diagnostics": [],
         "backend": "cpu",
         "timings": {
-          "tokenizeMs": 0.017042000000003554,
-          "inferMs": 0.15825000000000955,
-          "resolveMs": 0.05462499999998727
+          "tokenizeMs": 0.01587500000002251,
+          "inferMs": 0.2955000000000041,
+          "resolveMs": 0.12070799999997917
         }
       },
       "correct": true
     },
     {
-      "id": "result-015",
-      "text": "tomorrow at 2:30am",
+      "id": "result-014",
+      "text": "sutra u 2:30ujutru",
       "context": {
         "reference": "2026-03-07T12:00:00-05:00",
         "timeZone": "America/New_York"
@@ -541,16 +507,16 @@
         ],
         "backend": "cpu",
         "timings": {
-          "tokenizeMs": 0.0029590000000041528,
-          "inferMs": 0.16312500000000796,
-          "resolveMs": 0.08620799999999917
+          "tokenizeMs": 0.005249999999989541,
+          "inferMs": 0.28137499999999704,
+          "resolveMs": 0.13016700000000014
         }
       },
       "correct": true
     },
     {
-      "id": "result-016",
-      "text": "every day at 2:30am",
+      "id": "result-015",
+      "text": "svaki dan u 2:30ujutru",
       "context": {
         "reference": "2026-03-07T12:00:00-05:00",
         "timeZone": "America/New_York",
@@ -584,16 +550,16 @@
         "diagnostics": [],
         "backend": "cpu",
         "timings": {
-          "tokenizeMs": 0.0035829999999918982,
-          "inferMs": 0.20345899999999517,
-          "resolveMs": 0.0914590000000004
+          "tokenizeMs": 0.005751000000003614,
+          "inferMs": 0.3236249999999927,
+          "resolveMs": 0.1414999999999793
         }
       },
       "correct": true
     },
     {
-      "id": "result-017",
-      "text": "27pm",
+      "id": "result-016",
+      "text": "27popodne",
       "context": {
         "reference": "2026-09-09T12:00:00+06:00",
         "timeZone": "Asia/Dhaka"
@@ -615,16 +581,16 @@
         ],
         "backend": "cpu",
         "timings": {
-          "tokenizeMs": 0.003917000000001281,
-          "inferMs": 0.057332999999999856,
-          "resolveMs": 0.050125000000022624
+          "tokenizeMs": 0.005207999999981894,
+          "inferMs": 0.08745899999999551,
+          "resolveMs": 0.079166999999984
         }
       },
       "correct": true
     },
     {
-      "id": "result-018",
-      "text": "May I have your second opinion?",
+      "id": "result-017",
+      "text": "Mogu li da čujem vaše drugo mišljenje?",
       "context": {
         "reference": "2026-09-09T12:00:00+06:00",
         "timeZone": "Asia/Dhaka"
@@ -637,9 +603,9 @@
         "diagnostics": [],
         "backend": "cpu",
         "timings": {
-          "tokenizeMs": 0.012625999999997362,
-          "inferMs": 0.24920899999999335,
-          "resolveMs": 0.0040420000000125356
+          "tokenizeMs": 0.03195800000003146,
+          "inferMs": 0.6252920000000017,
+          "resolveMs": 0.009208000000000993
         }
       },
       "correct": true

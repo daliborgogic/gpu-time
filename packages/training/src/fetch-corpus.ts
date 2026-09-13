@@ -51,10 +51,10 @@ if (manifest.prose.sha256 !== sha256) {
 // model that a digit is not automatically a time. Only time-shaped ones go.
 const TIME_SHAPED = [
   /\d{1,2}\s*:\s*\d{2}/,
-  /\b\d{1,2}\s*(?:am|pm|a\.m|p\.m)\b/i,
   /\b\d{1,2}\s*[\/.-]\s*\d{1,2}\b/,
   /\b(?:19|20)\d{2}/,
-  /\b\d{1,3}(?:st|nd|rd|th)\b/i,
+  // "12. mart" (12th of March) — Serbian's numeric-ordinal-date marker.
+  /\d{1,2}\.\s*(?:januar|februar|mart|april|maj|jun|jul|avgust|septembar|oktobar|novembar|decembar)/iu,
 ];
 
 function timeLikeNumber(text: string): boolean {

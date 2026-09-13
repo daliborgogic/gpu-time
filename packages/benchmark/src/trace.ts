@@ -32,10 +32,10 @@ try {
     const { defineParser } = await import(path);
     const parser = await defineParser({ backend: "webgpu" });
     const phrases = [
-      "tomorrow at noon",
-      "next Monday at 2pm",
-      "every Friday",
-      "Sat Sun 1pm-8pm Mon 10pm-12am",
+      "sutra u podne",
+      "sledeći ponedeljak u 2popodne",
+      "svaki petak",
+      "Sub Ned 1popodne-8popodne Pon 10popodne-12ujutru",
     ];
     const texts = Array.from({ length: 10000 }, (_, i) => phrases[i % 4]);
     const context = {

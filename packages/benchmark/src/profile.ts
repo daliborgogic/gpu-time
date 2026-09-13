@@ -51,13 +51,13 @@ try {
         ? Array.from(
             { length: 1000 },
             (_, index) =>
-              `2027-10-${String((index % 28) + 1).padStart(2, "0")} at ${String(Math.floor(index / 28) % 24).padStart(2, "0")}:${String(Math.floor(index / 672) * 15).padStart(2, "0")}`,
+              `2027-10-${String((index % 28) + 1).padStart(2, "0")} u ${String(Math.floor(index / 28) % 24).padStart(2, "0")}:${String(Math.floor(index / 672) * 15).padStart(2, "0")}`,
           )
         : [
-            "tomorrow at noon",
-            "next Monday at 2pm",
-            "every Friday",
-            "Sat Sun 1pm-8pm Mon 10pm-12am",
+            "sutra u podne",
+            "sledeći ponedeljak u 2popodne",
+            "svaki petak",
+            "Sub Ned 1popodne-8popodne Pon 10popodne-12ujutru",
           ];
       const texts = Array.from(
         { length: diverse ? 1000 : 10000 },

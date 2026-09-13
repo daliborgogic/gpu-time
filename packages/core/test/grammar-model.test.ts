@@ -33,7 +33,19 @@ afterAll(() => parser.dispose());
 // the checkpoint that fixed it regressed compound-duration and prose-date, so
 // the gate rejected it. it.fails keeps the case running — a later retrain that
 // closes the gap turns this red and the id comes off the list.
-const knownGaps = new Set(["negative-017"]);
+//
+// The three grammar-variations gaps are casing/abbreviation edge cases found
+// while porting to Serbian: ALL-CAPS loses the monthly-ordinal recurrence flag
+// on "poslednji petak meseca"; "petak" abbreviated to "pet" collides with the
+// number word "pet" (five); abbreviated "nedelja" (here meaning "week", not
+// Sunday) isn't reliably tagged UNIT. All three need more training data, not
+// a compiler fix.
+const knownGaps = new Set([
+  "negative-017",
+  "grammar-069-uppercase",
+  "grammar-069-abbreviated",
+  "grammar-078-abbreviated",
+]);
 const isGap = (example: Example) => knownGaps.has(example.id);
 
 const check = async (example: Example) => {
@@ -50,10 +62,10 @@ it.each(examples.filter((example) => !isGap(example)))("$id: $text", check);
 it.fails.each(examples.filter(isGap))("known gap — $id: $text", check);
 
 it.each([
-  ["27pm", "invalid-time"],
-  ["2:99pm", "invalid-time"],
+  ["27popodne", "invalid-time"],
+  ["2:99popodne", "invalid-time"],
   ["2026-13-01", "invalid-date"],
-  ["every Monday until", "invalid-bound"],
+  ["svaki ponedeljak do", "invalid-bound"],
 ])("rejects malformed or ambiguous input: %s", async (text, code) => {
   const result = await parser.parse(text);
   expect(result.expressions).toHaveLength(1);

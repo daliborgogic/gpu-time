@@ -21,14 +21,12 @@ const direct = await read("direct-results");
 const gpu = JSON.parse(
   await readFile(join(training, "results", "parity-gpu.json"), "utf8"),
 );
-const external = await read("recognizers-development");
 const semantic = JSON.parse(
   await readFile(join(training, "results", "semantic-evaluation.json"), "utf8"),
 );
 if (
   browser.model !== model.artifactSha256 ||
   direct.model !== model.artifactSha256 ||
-  external.model !== model.artifactSha256 ||
   semantic.model !== model.artifactSha256 ||
   structure.model !== model.artifactSha256 ||
   gpu.model !== model.artifactSha256
@@ -67,11 +65,6 @@ const names: Record<string, string> = {
   "gpu-time-cpu": "gpu-time CPU",
   "gpu-time-webgpu": "gpu-time WebGPU",
   "gpu-time": "gpu-time",
-  chrono: "Chrono (English)",
-  compromise: "Compromise + dates",
-  rrule: "rrule",
-  recognizers: "Microsoft Recognizers",
-  later: "Later",
 };
 const performance = (browser.results as BrowserRow[]).map((row) => ({
   library: row.library,
@@ -102,7 +95,7 @@ const summary = {
     "Native outputs differ: gpu-time returns resolved dates, ranges and recurrence rules; other libraries return components, dates, TIMEX or recurrence constraints. Speed is not feature equivalence.",
     "The four-input batch workload includes unsupported inputs. Reported thrown-error counts do not include silent partial parses or abstentions.",
     "Internal interpretation checks and direct-result fixtures are development checks. Sets overlap and are not a final independent accuracy benchmark.",
-    "Cross-library resolved-date correctness, remaining external corpora, a broader gold set and Python batch throughput remain incomplete. Microsoft development agreement is reported separately; its test split remains reserved.",
+    "Cross-library comparison against Microsoft Recognizers-Text's English development corpus is disabled: gpu-time is Serbian-only now, and that corpus was never something it's meant to understand. See MODEL_CARD.md's Evaluation section.",
     "The complete gpu-time library exceeds its 30,000-byte Brotli budget.",
   ],
   performance,
@@ -122,13 +115,6 @@ const summary = {
   ),
   parity: gpu,
   directResults: { total: direct.total, correct: direct.correct },
-  external: {
-    name: "Microsoft Recognizers development",
-    total: external.total,
-    correct: external.correct,
-    accuracy: external.accuracy,
-    reservedTestCases: external.corpus.test,
-  },
   semantic: {
     total: semantic.total,
     correct: semantic.correct,
@@ -167,7 +153,9 @@ for (const row of performance) {
   const large = row.batches!.find((batch) => batch.size === 10000)!;
   const singleOutput = (browser.results as BrowserRow[])
     .find((value) => value.library === row.library)
-    ?.result?.outputs.find((value) => value.text === "next Monday at 2pm");
+    ?.result?.outputs.find(
+      (value) => value.text === "sledeći ponedeljak u 2popodne",
+    );
   lines.push(
     `| ${row.name} | ${microseconds(row.single.p50Ms)} | ${microseconds(row.single.p95Ms)} | ${small.ms.toFixed(2)} | ${large.ms.toFixed(2)} | ${large.failures} | ${singleOutput?.abstained ? "No" : "Yes"} |`,
   );
@@ -180,24 +168,7 @@ lines.push(
   "",
   "## Independent source cases",
   "",
-  `Microsoft Recognizers development: **${external.correct}/${external.total} (${(100 * external.accuracy).toFixed(2)}%)** strict agreement with upstream future civil dates and intervals. These expected values come from upstream specifications, not gpu-time.`,
-  "",
-  `The corpus is pinned to [${external.corpus.commit.slice(0, 12)}](https://github.com/microsoft/Recognizers-Text/tree/${external.corpus.commit}/Specs/DateTime/English). ${external.corpus.test} grouped cases remain reserved and are not evaluated here. No mismatches are removed as policy differences. Component-specific empty results are not treated as global negative sentences. Symbolic SET/duration values without concrete dates are listed among exclusions.`,
-  "",
-  "| Source component | Exact resolved results |",
-  "|---|---:|",
-  ...external.families.map(
-    (row: { family: string; correct: number; total: number }) =>
-      `| ${row.family} | ${row.correct}/${row.total} |`,
-  ),
-  "",
-  "| Failure stage | Cases |",
-  "|---|---:|",
-  ...Object.entries(external.stages).map(
-    ([stage, count]) => `| ${stage} | ${count} |`,
-  ),
-  "",
-  "Matches to an upstream past interpretation remain failures in the strict future score. Assembly failures can come from incorrect model roles or missing assembler support; the stage alone does not attribute the cause.",
+  "Microsoft Recognizers-Text's English development corpus is no longer scored here: gpu-time is a Serbian-only parser now, and those test cases were never something it's meant to understand. `external.ts` and `fetch-recognizers.ts` are kept for reference but are not run by default — see MODEL_CARD.md's Evaluation section.",
   "",
   `The separate synthetic AST check scores **${semantic.correct}/${semantic.total}**. Its expected ASTs are sampled before rendering, and all ${semantic.total} renderer/oracle pairs pass compiler equality. Fresh values share training rendering families, so this is a development check rather than independent language accuracy.`,
   "",

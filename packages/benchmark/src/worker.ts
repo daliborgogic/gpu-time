@@ -34,7 +34,7 @@ async function run(
   const adapter: Adapter = await factories[library]();
   const initializationMs = performance.now() - started;
   try {
-    const sample = "next Monday at 2pm";
+    const sample = "sledeći ponedeljak u 2popodne";
     const first = performance.now();
     await adapter.parse(sample);
     const firstParseMs = performance.now() - first;
@@ -47,10 +47,10 @@ async function run(
     }
     const batches = [];
     const workload = [
-      "tomorrow at noon",
-      "next Monday at 2pm",
-      "every Friday",
-      "Sat Sun 1pm-8pm Mon 10pm-12am",
+      "sutra u podne",
+      "sledeći ponedeljak u 2popodne",
+      "svaki petak",
+      "Sub Ned 1popodne-8popodne Pon 10popodne-12ujutru",
     ];
     for (const size of [1000, 10000]) {
       const texts = Array.from(

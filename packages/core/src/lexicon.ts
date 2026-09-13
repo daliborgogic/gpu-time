@@ -12,6 +12,18 @@ export const dayNames = [
   "nedelja",
 ];
 
+// Genitive forms ("od ponedeljka do srede" = "from Monday to Wednesday") —
+// the case a weekday takes after "od"/"do", not just the nominative.
+const dayGenitive = [
+  "ponedeljka",
+  "utorka",
+  "srede",
+  "četvrtka",
+  "petka",
+  "subote",
+  "nedelje",
+];
+
 export const monthNames = [
   "januar",
   "februar",
@@ -202,7 +214,8 @@ export function number(text: string): number {
 export function weekday(text: string): Weekday | undefined {
   const word = text.toLowerCase().replace(/\.$/, "");
   const index = dayNames.findIndex(
-    (name) => name === word || name.slice(0, 3) === word,
+    (name, position) =>
+      name === word || name.slice(0, 3) === word || dayGenitive[position] === word,
   );
 
   return weekdays[index];

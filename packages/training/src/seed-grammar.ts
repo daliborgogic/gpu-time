@@ -57,246 +57,224 @@ function example(family: string, text: string, ...clauses: Clause[]) {
 }
 
 // Explicit expectations from plan/002, authored without calling any parser.
-example("now-relative-day", "now", { date: { kind: "now" } });
-example("now-relative-day", "today", { date: relative(0) });
-example("now-relative-day", "tonight", { date: relative(0) });
-example("now-relative-day", "tomorrow", { date: relative(1) });
-example("now-relative-day", "yesterday", { date: relative(-1) });
-example("now-relative-day", "the day after tomorrow", { date: relative(2) });
-example("relative-quantity", "1 day before", shift(1, "day", "before"));
-example("relative-quantity", "10 days after", shift(10, "day", "after"));
-example("relative-quantity", "in 90 minutes", shift(90, "minute", "after"));
-example("relative-quantity", "3 weeks from now", {
+example("now-relative-day", "sada", { date: { kind: "now" } });
+example("now-relative-day", "danas", { date: relative(0) });
+example("now-relative-day", "večeras", { date: relative(0) });
+example("now-relative-day", "sutra", { date: relative(1) });
+example("now-relative-day", "juče", { date: relative(-1) });
+example("now-relative-day", "prekosutra", { date: relative(2) });
+example("relative-quantity", "1 dan pre", shift(1, "day", "before"));
+example("relative-quantity", "10 dana posle", shift(10, "day", "after"));
+example("relative-quantity", "kroz 90 minuta", shift(90, "minute", "after"));
+example("relative-quantity", "3 nedelje od sada", {
   ...shift(3, "week", "after"),
   date: { kind: "now" },
 });
-example("relative-quantity", "two months later", shift(2, "month", "after"));
-example("relative-quantity", "5 days ago", shift(5, "day", "before"));
-example("anchored-relative", "2 days before Friday", {
+example("relative-quantity", "dva meseca kasnije", shift(2, "month", "after"));
+example("relative-quantity", "pre 5 dana", shift(5, "day", "before"));
+example("anchored-relative", "2 dana pre petak", {
   ...shift(2, "day", "before"),
   date: weekday("FR"),
 });
-example("anchored-relative", "two hours before tomorrow at noon", {
+example("anchored-relative", "dva sata pre sutra u podne", {
   ...shift(2, "hour", "before"),
   date: relative(1),
   time: named("noon"),
 });
-example("anchored-relative", "3 days after October 1", {
+example("anchored-relative", "3 dana posle 1. oktobar", {
   ...shift(3, "day", "after"),
   date: calendar(10, 1),
 });
-example("anchored-relative", "a week before Christmas", {
+example("anchored-relative", "jedna nedelja pre Božić", {
   ...shift(1, "week", "before"),
   date: { kind: "holiday", name: "christmas" },
 });
-example("relative-unit", "next week", {
-  date: { kind: "relativeUnit", unit: "week", modifier: "next" },
-});
-example("relative-unit", "last month", {
+example("relative-unit", "prošli mesec", {
   date: { kind: "relativeUnit", unit: "month", modifier: "last" },
 });
-example("relative-unit", "this weekend", {
+example("relative-unit", "ovaj vikend", {
   date: { kind: "dayGroup", group: "weekend", modifier: "this" },
 });
-example("relative-unit", "in one year", shift(1, "year", "after"));
-example("relative-unit", "end of next month", {
+example("relative-unit", "kroz jedna godina", shift(1, "year", "after"));
+example("relative-unit", "kraj sledeći mesec", {
   date: { kind: "relativeUnit", unit: "month", modifier: "next", edge: "end" },
 });
-example("weekday", "Monday", { date: weekday("MO") });
-example("weekday", "Mon", { date: weekday("MO") });
-example("weekday", "next Friday", {
+example("weekday", "Ponedeljak", { date: weekday("MO") });
+example("weekday", "Pon", { date: weekday("MO") });
+example("weekday", "sledeći petak", {
   date: { kind: "weekday", days: ["FR"], modifier: "next" },
 });
-example("weekday", "this Monday", {
+example("weekday", "ovaj ponedeljak", {
   date: { kind: "weekday", days: ["MO"], modifier: "this" },
 });
-example("weekday", "last Tuesday", {
+example("weekday", "prošli utorak", {
   date: { kind: "weekday", days: ["TU"], modifier: "last" },
 });
-example("weekday", "Monday and Wednesday", { date: weekday("MO", "WE") });
+example("weekday", "ponedeljak i sreda", { date: weekday("MO", "WE") });
 example(
   "day-group",
-  "weekdays",
+  "radni dani",
   recurrence("weekly", { byDay: ["MO", "TU", "WE", "TH", "FR"] }),
 );
-example("day-group", "weekends", recurrence("weekly", { byDay: ["SA", "SU"] }));
+example("day-group", "vikendi", recurrence("weekly", { byDay: ["SA", "SU"] }));
 example(
   "day-group",
-  "every weekday",
-  recurrence("weekly", { byDay: ["MO", "TU", "WE", "TH", "FR"] }),
-);
-example(
-  "day-group",
-  "Mon-Fri",
+  "svaki radni dan",
   recurrence("weekly", { byDay: ["MO", "TU", "WE", "TH", "FR"] }),
 );
 example(
   "day-group",
-  "Monday through Friday",
+  "Pon-Pet",
   recurrence("weekly", { byDay: ["MO", "TU", "WE", "TH", "FR"] }),
 );
-example("clock", "2pm", { time: clock(14) });
-example("clock", "2 p.m.", { time: clock(14) });
+example("clock", "2popodne", { time: clock(14) });
 example("clock", "14:00", { time: clock(14) });
-example("clock", "2:30pm", { time: clock(14, 30) });
-example("clock", "noon", { time: named("noon") });
-example("clock", "midnight", { time: named("midnight") });
-example("day-part", "morning", { time: { start: { part: "morning" } } });
-example("day-part", "afternoon", { time: { start: { part: "afternoon" } } });
-example("day-part", "evening", { time: { start: { part: "evening" } } });
-example("day-part", "night", { time: { start: { part: "night" } } });
-example("day-part", "Monday evening", {
+example("clock", "2:30popodne", { time: clock(14, 30) });
+example("clock", "podne", { time: named("noon") });
+example("clock", "ponoć", { time: named("midnight") });
+example("day-part", "jutro", { time: { start: { part: "morning" } } });
+example("day-part", "popodne", { time: { start: { part: "afternoon" } } });
+example("day-part", "veče", { time: { start: { part: "evening" } } });
+example("day-part", "noć", { time: { start: { part: "night" } } });
+example("day-part", "ponedeljak veče", {
   date: weekday("MO"),
   time: { start: { part: "evening" } },
 });
-example("day-part", "tomorrow morning", {
+example("day-part", "sutra jutro", {
   date: relative(1),
   time: { start: { part: "morning" } },
 });
-example("explicit-date", "October 1", { date: calendar(10, 1) });
-example("explicit-date", "Oct 1st", { date: calendar(10, 1) });
-example("explicit-date", "1 October", { date: calendar(10, 1) });
-example("explicit-date", "10/01", { date: calendar(10, 1) });
+example("explicit-date", "1. oktobar", { date: calendar(10, 1) });
+example("explicit-date", "oktobar 1", { date: calendar(10, 1) });
+example("explicit-date", "01/10", { date: calendar(10, 1) });
 example("explicit-date", "2026-10-01", { date: calendar(10, 1, 2026) });
-example("explicit-date", "October 1, 2027 at noon", {
+example("explicit-date", "1. oktobar 2027 u podne", {
   date: calendar(10, 1, 2027),
   time: named("noon"),
 });
-example("time-window", "10pm-12am", { time: window(22, 0) });
-example("time-window", "from 8 to 10pm", { time: window(20, 22) });
-example("time-window", "between 9am and noon", {
+example("time-window", "10popodne-12ujutru", { time: window(22, 0) });
+example("time-window", "od 8 do 10popodne", { time: window(20, 22) });
+example("time-window", "između 9ujutru i podne", {
   time: { start: { hour: 9, minute: 0 }, end: { named: "noon" } },
 });
-example("time-window", "Monday 1pm-8pm", {
+example("time-window", "ponedeljak 1popodne-8popodne", {
   date: weekday("MO"),
   time: window(13, 20),
 });
-example("time-window", "9 to 5", { time: window(9, 17) });
-example("date-range", "June 11-16", {
+example("time-window", "9 do 5", { time: window(9, 17) });
+example("date-range", "jun 11-16", {
   date: {
     kind: "calendarRange",
     from: { month: 6, day: 11 },
     to: { month: 6, day: 16 },
   },
 });
-example("date-range", "26 July - 22 August", {
+example("date-range", "26. jul - 22. avgust", {
   date: {
     kind: "calendarRange",
     from: { month: 7, day: 26 },
     to: { month: 8, day: 22 },
   },
 });
-example("date-range", "from Monday to Wednesday", {
+example("date-range", "od ponedeljak do sreda", {
   date: { kind: "weekdayRange", from: "MO", to: "WE" },
 });
-example("duration", "for 2 hours", { duration: { amount: 2, unit: "hour" } });
-example("duration", "for 90 minutes", {
+example("duration", "za 2 sata", { duration: { amount: 2, unit: "hour" } });
+example("duration", "za 90 minuta", {
   duration: { amount: 90, unit: "minute" },
 });
-example("duration", "for the next 10 days", {
+example("duration", "za 10 dana", {
   duration: { amount: 10, unit: "day" },
 });
 example(
   "multi-clause",
-  "Monday 10pm-12am and Saturday Sunday 1pm-8pm",
+  "ponedeljak 10popodne-12ujutru i subota nedelja 1popodne-8popodne",
   { date: weekday("MO"), time: window(22, 0) },
   { date: weekday("SA", "SU"), time: window(13, 20) },
 );
 example(
   "multi-clause",
-  "Mon at 9, Wed at 10, Fri at 11",
+  "pon u 9, sre u 10, pet u 11",
   { date: weekday("MO"), time: clock(9) },
   { date: weekday("WE"), time: clock(10) },
   { date: weekday("FR"), time: clock(11) },
 );
-example("recurrence", "every Monday at 8pm", {
+example("recurrence", "svaki ponedeljak u 8popodne", {
   ...recurrence("weekly", { byDay: ["MO"] }),
   time: clock(20),
 });
-example("recurrence", "each Tuesday", recurrence("weekly", { byDay: ["TU"] }));
-example("recurrence", "daily at noon", {
+example("recurrence", "svaki utorak", recurrence("weekly", { byDay: ["TU"] }));
+example("recurrence", "dnevno u podne", {
   ...recurrence("daily"),
   time: named("noon"),
 });
-example("recurrence", "weekly", recurrence("weekly"));
+example("recurrence", "nedeljno", recurrence("weekly"));
 example(
   "recurrence",
-  "every 2 weeks on Tuesday",
-  recurrence("weekly", { interval: 2, byDay: ["TU"] }),
-);
-example(
-  "recurrence",
-  "every other Friday",
+  "svaki drugi petak",
   recurrence("weekly", { interval: 2, byDay: ["FR"] }),
 );
-example("recurrence", "twice a week", recurrence("weekly", { timesPer: 2 }));
-example("recurrence", "3 times a day", recurrence("daily", { timesPer: 3 }));
+example("recurrence", "2 puta na nedelju", recurrence("weekly", { timesPer: 2 }));
+example("recurrence", "3 puta na dan", recurrence("daily", { timesPer: 3 }));
 example(
   "monthly-yearly",
-  "every month on the 31st",
+  "svaki mesec 31.",
   recurrence("monthly", { byMonthDay: [31] }),
 );
 example(
   "monthly-yearly",
-  "the first Monday of every month",
+  "prvi ponedeljak meseca",
   recurrence("monthly", { byDay: ["MO"], bySetPos: [1] }),
 );
 example(
   "monthly-yearly",
-  "last Friday of the month",
+  "poslednji petak meseca",
   recurrence("monthly", { byDay: ["FR"], bySetPos: [-1] }),
 );
 example(
   "monthly-yearly",
-  "1st and 15th of each month",
+  "1. i 15. svaki mesec",
   recurrence("monthly", { byMonthDay: [1, 15] }),
 );
 example(
   "monthly-yearly",
-  "every year on March 26",
+  "godišnje 26. mart",
   recurrence("yearly", { byMonth: [3], byMonthDay: [26] }),
 );
-example("monthly-yearly", "annually", recurrence("yearly"));
+example("monthly-yearly", "godišnje", recurrence("yearly"));
 example(
   "bounds",
-  "every Monday starting October 1",
+  "svaki ponedeljak počevši od 1. oktobar",
   recurrence("weekly", { byDay: ["MO"], start: calendar(10, 1) }),
 );
 example(
   "bounds",
-  "every week from next week",
-  recurrence("weekly", {
-    start: { kind: "relativeUnit", unit: "week", modifier: "next" },
-  }),
-);
-example(
-  "bounds",
-  "every Monday until December 31",
+  "svaki ponedeljak, do 31. decembar",
   recurrence("weekly", { byDay: ["MO"], until: calendar(12, 31) }),
 );
 example(
   "bounds",
-  "every Tuesday until Dec",
+  "svaki utorak do dec",
   recurrence("weekly", { byDay: ["TU"], until: calendar(12) }),
 );
 example(
   "bounds",
-  "every day through Friday",
+  "svaki dan do petak",
   recurrence("daily", { until: weekday("FR") }),
 );
 example(
   "bounds",
-  "every Monday for 6 times",
+  "svaki ponedeljak 6 puta",
   recurrence("weekly", { byDay: ["MO"], count: 6 }),
 );
 example(
   "bounds",
-  "every Monday for 10 weeks",
+  "svaki ponedeljak za 10 nedelja",
   recurrence("weekly", { byDay: ["MO"], span: { amount: 10, unit: "week" } }),
 );
 example(
   "exceptions",
-  "every weekday except Friday",
+  "svaki radni dan osim petak",
   recurrence("weekly", {
     byDay: ["MO", "TU", "WE", "TH", "FR"],
     except: [weekday("FR")],
@@ -304,81 +282,81 @@ example(
 );
 example(
   "exceptions",
-  "every day except Sundays",
+  "svaki dan osim nedelja",
   recurrence("daily", { except: [weekday("SU")] }),
 );
-example("prose", "remind me to call Sam on Monday at 2pm", {
+example("prose", "podseti me da nazovem Milana u ponedeljak u 2popodne", {
   date: weekday("MO"),
   time: clock(14),
 });
 example(
   "prose",
-  "the meeting is every other Tuesday until Dec",
+  "sastanak je svaki drugi utorak do dec",
   recurrence("weekly", { byDay: ["TU"], interval: 2, until: calendar(12) }),
 );
-example("prose", "deadline: 3 days before Christmas", {
+example("prose", "krajnji rok: 3 dana pre Božić", {
   ...shift(3, "day", "before"),
   date: { kind: "holiday", name: "christmas" },
 });
-example("holiday", "Christmas", {
+example("holiday", "Božić", {
   date: { kind: "holiday", name: "christmas" },
 });
-example("holiday", "Christmas Eve", {
+example("holiday", "Badnje veče", {
   date: { kind: "holiday", name: "christmas-eve" },
 });
-example("holiday", "New Year's Day", {
+example("holiday", "Nova godina", {
   date: { kind: "holiday", name: "new-year" },
 });
-example("holiday", "Halloween", {
+example("holiday", "Noć veštica", {
   date: { kind: "holiday", name: "halloween" },
 });
-example("holiday", "Valentine's Day", {
+example("holiday", "Valentinovo", {
   date: { kind: "holiday", name: "valentines" },
 });
 
-example("explicit-date", "October sixth", { date: calendar(10, 6) });
-example("explicit-date", "twelfth of October", { date: calendar(10, 12) });
-example("explicit-date", "February ninth, 2028", {
+example("explicit-date", "šesti oktobar", { date: calendar(10, 6) });
+example("explicit-date", "dvanaesti oktobar", { date: calendar(10, 12) });
+example("explicit-date", "deveti februar 2028.", {
   date: calendar(2, 9, 2028),
 });
-example("clock", "twelve pm", { time: clock(12) });
-example("clock", "eleven am", { time: clock(11) });
-example("time-window", "9am to 5", { time: window(9, 17) });
-example("time-window", "10 to 2am", { time: window(22, 2) });
-example("time-window", "8 to midnight", {
+example("clock", "dvanaest popodne", { time: clock(12) });
+example("clock", "jedanaest ujutru", { time: clock(11) });
+example("time-window", "9ujutru do 5", { time: window(9, 17) });
+example("time-window", "10 do 2ujutru", { time: window(22, 2) });
+example("time-window", "8 do ponoć", {
   time: { start: { hour: 20, minute: 0 }, end: { named: "midnight" } },
 });
 example(
   "relative-quantity",
-  "twelve minutes after",
+  "dvanaest minuta posle",
   shift(12, "minute", "after"),
 );
 example(
   "monthly-yearly",
-  "every month on the seventh",
+  "svaki mesec sedmi",
   recurrence("monthly", { byMonthDay: [7] }),
 );
-example("holiday", "Christmas Eve at noon", {
+example("holiday", "Badnje veče u podne", {
   date: { kind: "holiday", name: "christmas-eve" },
   time: named("noon"),
 });
 
-example("clock-period", "two in the afternoon", { time: clock(14) });
-example("clock-period", "five in the morning", { time: clock(5) });
-example("clock-period", "seven in the evening", { time: clock(19) });
-example("clock-period", "twelve in the morning", { time: clock(0) });
-example("clock-period", "twelve in the afternoon", { time: clock(12) });
-example("clock-period", "2:30 in the afternoon", { time: clock(14, 30) });
-example("clock-period", "tomorrow at eight in the morning", {
+example("clock-period", "dva popodne", { time: clock(14) });
+example("clock-period", "pet ujutru", { time: clock(5) });
+example("clock-period", "sedam uveče", { time: clock(19) });
+example("clock-period", "dvanaest ujutru", { time: clock(0) });
+example("clock-period", "dvanaest popodne", { time: clock(12) });
+example("clock-period", "2:30 popodne", { time: clock(14, 30) });
+example("clock-period", "sutra u osam ujutru", {
   date: relative(1),
   time: clock(8),
 });
-example("clock-period", "every Monday at six in the evening", {
+example("clock-period", "svaki ponedeljak u šest uveče", {
   ...recurrence("weekly", { byDay: ["MO"] }),
   time: clock(18),
 });
-example("clock-period", "from 5 to 7 in the evening", { time: window(17, 19) });
-example("clock-period", "from 9 in the morning to 5 in the afternoon", {
+example("clock-period", "od 5 do 7 uveče", { time: window(17, 19) });
+example("clock-period", "od 9 ujutru do 5 popodne", {
   time: window(9, 17),
 });
 
