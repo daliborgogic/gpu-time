@@ -185,6 +185,16 @@ def main():
         help="Initialize weights from an earlier checkpoint; optimizer starts fresh.",
     )
     parser.add_argument("--learning-rate", type=float, default=3e-3)
+    parser.add_argument(
+        "--focal-gamma",
+        type=float,
+        default=0.0,
+        help="Focal-loss exponent (Lin et al., ICCV 2017) applied to both the "
+        "role and boundary losses: each token's loss is scaled by "
+        "(1 - p_correct)^gamma, so confidently-correct tokens contribute less "
+        "and the gradient concentrates on tokens the model still gets wrong or "
+        "is unsure about. 0 (default) reproduces the unweighted loss exactly.",
+    )
     parser.add_argument("--storage", choices=["f16", "f32"], default="f16")
     parser.add_argument("--feature-rows", type=int, choices=[324, 580], default=580)
     parser.add_argument(
@@ -305,17 +315,36 @@ def main():
             )
             logits, boundary_logits = model(rows, valid, neighbors)
             mask = labels >= 0
-            role_loss = F.cross_entropy(
+            role_ce = F.cross_entropy(
                 logits.reshape(-1, ROLE_CLASSES),
                 labels.reshape(-1),
                 ignore_index=-100,
                 label_smoothing=0.05,
+                reduction="none",
             )
-            boundary_loss = F.binary_cross_entropy_with_logits(
+            role_valid = labels.reshape(-1) != -100
+            boundary_bce = F.binary_cross_entropy_with_logits(
                 boundary_logits[mask],
                 boundaries[mask],
                 pos_weight=torch.tensor(8.0, device=args.device),
+                reduction="none",
             )
+            if args.focal_gamma > 0:
+                # (1 - p_correct)^gamma: confidently-correct tokens contribute
+                # almost nothing, so rare-but-correct patterns (e.g. genitive
+                # modifiers) aren't swamped by the volume of easy examples.
+                role_p = torch.exp(-role_ce)
+                role_weight = (1 - role_p).pow(args.focal_gamma)
+                role_loss = (role_weight * role_ce)[role_valid].mean()
+                boundary_p = torch.sigmoid(boundary_logits[mask])
+                boundary_p = torch.where(
+                    boundaries[mask] == 1, boundary_p, 1 - boundary_p
+                )
+                boundary_weight = (1 - boundary_p).pow(args.focal_gamma)
+                boundary_loss = (boundary_weight * boundary_bce).mean()
+            else:
+                role_loss = role_ce[role_valid].mean()
+                boundary_loss = boundary_bce.mean()
             loss = role_loss + 0.5 * boundary_loss
             optimizer.zero_grad(set_to_none=True)
             loss.backward()
