@@ -23,7 +23,7 @@ try {
   });
   await page.evaluate(() => document.fonts.ready);
   await page.locator("#model-size").evaluate((element, count) => {
-    element.textContent = `${count.toLocaleString("en-US")} parameters`;
+    element.textContent = `${count.toLocaleString("sr-RS")} parametara`;
   }, report.parameters);
   await page.screenshot({
     path: fileURLToPath(new URL("public/media/poster.png", root)),

@@ -68,6 +68,7 @@ export function Demo({ initial }: { initial: Formatted }) {
         rows: [],
         status: "The parser could not run. Please reload and try again.",
         context: "",
+        meta: "",
       });
     } finally {
       if (ticket === seq.current) setBusy(false);
@@ -172,8 +173,11 @@ export function Demo({ initial }: { initial: Formatted }) {
             </ul>
           </div>
 
-          <p id="demo-context" className="px-4 pb-2.5 text-[11px] text-neutral-400">
-            {result.context}
+          <p className="flex items-baseline justify-between gap-3 px-4 pb-2.5 text-[11px] text-neutral-400">
+            <span id="demo-context">{result.context}</span>
+            <span id="demo-meta" className="tabular-nums">
+              {result.meta}
+            </span>
           </p>
         </div>
       </section>

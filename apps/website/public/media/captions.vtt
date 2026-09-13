@@ -37,8 +37,8 @@ The scores become roles. The model does not calculate calendar dates.
 Code combines the roles into a weekly window, then applies your reference date and timezone.
 
 10
-00:01:13.000 --> 00:01:19.136
-Eight P M stays fixed in New York, even when daylight saving changes the U T C time.
+00:01:13.000 --> 00:01:19.338
+Eight P M stays fixed in Belgrade, even when daylight saving changes the U T C time.
 
 11
 00:01:21.000 --> 00:01:24.566

@@ -91,8 +91,8 @@ class GpuTimePipeline(Scene):
         # 00–05: the phrase, typed rather than revealed as a slide.
         brand = txt("gpu-time", 17, MUTED).move_to([-5.95, 3.65, 0])
         self.add(brand)
-        self.title("Start with a Sentence", 1)
-        self.caption("A recurring window, written in plain English.")
+        self.title("Počni od rečenice", 1)
+        self.caption("Prozor koji se ponavlja, napisan na srpskom.")
         sentence = txt(DATA["text"], 43).move_to([0, .25, 0])
         intro_words = VGroup(*[
             sentence[
@@ -106,8 +106,8 @@ class GpuTimePipeline(Scene):
         self.until(5)
 
         # 05–12: preserve identity and offsets through tokenization.
-        self.title("Keep Each Token’s Position", 2)
-        self.caption("Words, numbers and AM/PM split apart. Spaces retained internally.")
+        self.title("Zadrži poziciju svakog tokena", 2)
+        self.caption("Reči, brojevi i oznake perioda dana se razdvajaju. Razmaci se čuvaju interno.")
         tokens = VGroup(*[pill(t["text"], size=28) for t in DATA["model"]])
         tokens.arrange(RIGHT, buff=0.18).move_to([0, 0.2, 0])
         words = [word.copy().set_z_index(10) for word in intro_words]
@@ -127,8 +127,8 @@ class GpuTimePipeline(Scene):
         self.until(12)
 
         # 12–22: actual learned embeddings, not the old sparse feature model.
-        self.title("Learned Token Vectors", 3)
-        self.caption("Each grid holds 32 learned values, summed from token-feature embeddings.")
+        self.title("Naučeni vektori tokena", 3)
+        self.caption("Svaka mreža sadrži 32 naučene vrednosti, zbir ugnježdenih obeležja tokena.")
         self.play(FadeOut(spans), tokens.animate.move_to([0,-2.1,0]),run_time=1.4)
         columns = VGroup()
         for t,p in zip(DATA["model"],tokens):
@@ -148,8 +148,8 @@ class GpuTimePipeline(Scene):
         self.until(22)
 
         # Local convolution and nearest-word mixing retain the same token vectors.
-        self.title("Mix Nearby Context",4)
-        self.caption("A five-position filter mixes nearby features. Spaces are hidden in this view.")
+        self.title("Mešaj obližnji kontekst",4)
+        self.caption("Filter od pet pozicija meša obližnja obeležja. Razmaci su sakriveni u ovom prikazu.")
         self.play(FadeOut(focus),run_time=.5)
         context=SurroundingRectangle(VGroup(columns[0],columns[1],columns[2]),buff=.13,stroke_color=BLUE,stroke_width=1.5)
         self.play(ShowCreation(context),run_time=.8,cue="context_scan")
@@ -164,8 +164,8 @@ class GpuTimePipeline(Scene):
         self.until(30)
 
         # Bidirectional gated recurrence is the central difference from the old MLP.
-        self.title("Context from Both Sides",5)
-        self.caption("Each token’s 32 state values update as context arrives from either direction.")
+        self.title("Kontekst sa obe strane",5)
+        self.caption("32 stanja svakog tokena se ažuriraju kako kontekst stiže iz oba smera.")
         self.play(FadeOut(context),
             *[column.animate.move_to([column.get_x(),-.45,0]) for column in columns],
             run_time=1.4)
@@ -173,7 +173,7 @@ class GpuTimePipeline(Scene):
         backward=VGroup(*[Dot([col.get_x(),.95,0],radius=.065).set_color(VIOLET) for col in columns])
         arrows=VGroup(*[line(forward[i].get_center(),forward[i+1].get_center(),BLUE,1.5) for i in range(len(forward)-1)])
         back_arrows=VGroup(*[line(backward[i+1].get_center(),backward[i].get_center(),VIOLET,1.5) for i in range(len(backward)-1)])
-        directions=VGroup(txt("forward →",18,BLUE).move_to([-5.2,1.65,0]),txt("← backward",18,VIOLET).move_to([-5.2,.95,0]))
+        directions=VGroup(txt("unapred →",18,BLUE).move_to([-5.2,1.65,0]),txt("← unazad",18,VIOLET).move_to([-5.2,.95,0]))
         self.play(FadeIn(directions),FadeIn(forward),FadeIn(backward),run_time=.6)
         for stage,color,indices,rail,edges in [
             ("forward",BLUE,list(range(len(columns))),forward,arrows),
@@ -194,11 +194,11 @@ class GpuTimePipeline(Scene):
         self.until(40)
 
         # Classification head: true dimensionality, sampled connections.
-        self.title("From Context to Scores",6)
-        self.caption("Token context + pooled sentence context. Actual activations; nodes / links sampled.")
+        self.title("Od konteksta do skorova",6)
+        self.caption("Kontekst tokena + kontekst cele rečenice. Stvarne aktivacije; čvorovi / veze uzorkovani.")
         self.play(FadeOut(VGroup(columns,forward,backward,arrows,back_arrows,directions)),
             tokens.animate.scale(.8).move_to([0,-2.65,0]),run_time=1.2)
-        monday=pill("Monday",BLUE,30).move_to([-5.55,0,0])
+        monday=pill("Ponedeljak",BLUE,30).move_to([-5.55,0,0])
         t=DATA["model"][1]
         def nodes(values,x,count,height=3.3):
             selected=np.linspace(0,len(values)-1,count,dtype=int)
@@ -213,8 +213,8 @@ class GpuTimePipeline(Scene):
         # Head hidden takes combined/context directly as well as 16 gate outputs.
         for left,right in [(input_nodes,gate_nodes),(input_nodes,hidden_nodes),(gate_nodes,hidden_nodes),(hidden_nodes,score_nodes)]:
             links.add(VGroup(*[line(node.get_center(),right[(i*3+j*7)%len(right)].get_center(),FAINT,.65) for i,node in enumerate(left) for j in range(2)]))
-        headings=VGroup(txt("32 + 32",18,MUTED).move_to([-3.45,2.2,0]),txt("16 gates",18,MUTED).move_to([-1.25,2.2,0]),txt("64 hidden",18,MUTED).move_to([1.1,2.2,0]),txt("40 + 1",18,MUTED).move_to([3.45,2.2,0]))
-        engine=VGroup(txt("WebGPU",20,BLUE),txt("32 lanes",16,MUTED),txt("CPU too",16,MUTED)).arrange(DOWN,buff=.12).move_to([5.6,0,0])
+        headings=VGroup(txt("32 + 32",18,MUTED).move_to([-3.45,2.2,0]),txt("16 kapija",18,MUTED).move_to([-1.25,2.2,0]),txt("64 skrivena",18,MUTED).move_to([1.1,2.2,0]),txt("40 + 1",18,MUTED).move_to([3.45,2.2,0]))
+        engine=VGroup(txt("WebGPU",20,BLUE),txt("32 kanala",16,MUTED),txt("i CPU",16,MUTED)).arrange(DOWN,buff=.12).move_to([5.6,0,0])
         word=tokens[1][1].copy().set_z_index(10);self.add(word)
         self.play(word.animate.set_width(monday[1].get_width()).move_to(monday[1]).set_color(BLUE),FadeIn(monday[0]),FadeIn(headings),FadeIn(input_nodes),run_time=2.0,cue="network_focus")
         self.remove(word);self.add(monday)
@@ -225,8 +225,8 @@ class GpuTimePipeline(Scene):
         self.until(48)
 
         # The largest ten scores are a readable slice of the full forty-slot output.
-        self.title("Role Scores",7)
-        self.caption("10 highest named-role scores shown. 5 reserved slots omitted; boundary is separate.")
+        self.title("Skorovi uloga",7)
+        self.caption("Prikazano 10 najviših skorova imenovanih uloga. 5 rezervisanih mesta izostavljeno; granica je posebna.")
         self.play(FadeOut(VGroup(input_nodes,gate_nodes,hidden_nodes,links,headings,engine)),monday.animate.move_to([-4.8,.4,0]),run_time=1.0)
         values=DATA["model"][1]["logits"]
         indices=sorted(range(DATA["architecture"]["namedRoles"]),key=lambda i:values[i],reverse=True)[:10]
@@ -243,20 +243,20 @@ class GpuTimePipeline(Scene):
             numbers.add(txt(f"{value:+.3f}",18,color).move_to([5.7,y,0],aligned_edge=RIGHT))
         axis=line([zero_x,-1.5,0],[zero_x,2.2,0],FAINT,1)
         zero=txt("0",15,MUTED).move_to([zero_x,-1.7,0])
-        raw=VGroup(txt("40 role scores",23),txt("10 named roles shown",17,MUTED)).arrange(DOWN,buff=.2).move_to([-4.8,-.7,0])
+        raw=VGroup(txt("40 skorova uloga",23),txt("10 prikazanih imenovanih uloga",17,MUTED)).arrange(DOWN,buff=.2).move_to([-4.8,-.7,0])
         seeds=VGroup(*[bar.copy().stretch(.01,0,about_point=[zero_x,bar.get_y(),0]) for bar in bars])
         self.play(FadeOut(score_nodes),FadeIn(seeds),FadeIn(labels),FadeIn(axis),FadeIn(zero),FadeIn(raw),run_time=1.0,cue="score_transfer")
         self.play(LaggedStart(*[Transform(seed,bar) for seed,bar in zip(seeds,bars)],lag_ratio=.035),FadeIn(numbers),run_time=1.45,cue="score_grow")
         self.remove(seeds);self.add(bars)
         winner=SurroundingRectangle(VGroup(labels[0],bars[0],numbers[0]),buff=.085,stroke_color=BLUE,stroke_width=1.5)
         self.play(ShowCreation(winner),run_time=.85,cue="score_winner")
-        boundary=txt(f"separate boundary score: {t['boundaryLogit']:+.3f} < {DATA['architecture']['boundaryThreshold']}  →  no new clause",18,MUTED).move_to([0,-2.08,0])
+        boundary=txt(f"poseban skor granice: {t['boundaryLogit']:+.3f} < {DATA['architecture']['boundaryThreshold']}  →  nema nove klauze",18,MUTED).move_to([0,-2.08,0])
         self.play(FadeIn(boundary),run_time=.5)
         self.until(58)
 
         # 58–64: numbers become labels; tokens themselves stay exact.
-        self.title("Give Each Token a Role", 7)
-        self.caption("The model identifies roles. It does not calculate dates.")
+        self.title("Dodeli ulogu svakom tokenu", 7)
+        self.caption("Model prepoznaje uloge. Ne izračunava datume.")
         self.play(FadeOut(VGroup(labels, bars, numbers, axis, zero, raw, winner, monday, boundary)),
                   tokens.animate.scale(1.25).move_to([0, -0.15, 0]), run_time=1.55)
         token_labels = VGroup()
@@ -271,19 +271,19 @@ class GpuTimePipeline(Scene):
         self.until(64)
 
         # 64–72: visualize internal calendar normalization, not a public AST.
-        self.title("Resolve the Schedule", 8)
-        self.caption("Internal calendar normalization. The public API returns dates and rules directly.")
+        self.title("Reši raspored", 8)
+        self.caption("Interna normalizacija kalendara. Javni API direktno vraća datume i pravila.")
         self.play(FadeOut(token_labels), tokens.animate.scale(0.75).move_to([0, 2.2, 0]), run_time=1.6)
-        root = pill("recurring schedule", INK, 26).move_to([0, 0.95, 0])
+        root = pill("ponavljajući raspored", INK, 26).move_to([0, 0.95, 0])
         leaves = VGroup(
             pill("WEEKLY", VIOLET, 26, 2.65).move_to([-4.1, -0.65, 0]),
             pill("MO", BLUE, 26, 2.65).move_to([0, -0.65, 0]),
             pill("20:00–22:00", TEAL, 26, 3.1).move_to([4.1, -0.65, 0]),
         )
         names = VGroup(*[txt(name, 18, MUTED).next_to(node, DOWN, buff=0.18)
-                         for name, node in zip(["frequency", "day", "time window"], leaves)])
+                         for name, node in zip(["učestalost", "dan", "vremenski okvir"], leaves)])
         branches = VGroup(*[line(root.get_bottom(), n.get_top(), FAINT, 1.5) for n in leaves])
-        zone = txt("caller: reference date + America/New_York", 21, MUTED).move_to([0, -2.1, 0])
+        zone = txt("pozivalac: referentni datum + Europe/Belgrade", 21, MUTED).move_to([0, -2.1, 0])
         flying = VGroup(*[tokens[i][1].copy() for i in [0, 1, 3, 6]]).set_z_index(10)
         self.add(flying)
         destinations = [leaves[0][1].get_center(), leaves[1][1].get_center(),
@@ -300,13 +300,13 @@ class GpuTimePipeline(Scene):
         self.until(72)
 
         # 72–80: real occurrences straddling the daylight-saving transition.
-        self.title("Keep the Local Time", 9)
-        self.caption("Daylight saving ends November 1. The local schedule stays at 8pm.")
+        self.title("Zadrži lokalno vreme", 9)
+        self.caption("Letnje računanje vremena završava se 25. oktobra. Lokalni raspored ostaje u 20:00.")
         self.play(FadeOut(VGroup(tokens, root, branches, leaves, names, zone)), run_time=0.9)
         column_titles = VGroup(
-            txt("MONDAY", 18, MUTED).move_to([-4.2, 1.98, 0]),
-            txt("LOCAL WINDOW", 18, MUTED).move_to([-0.4, 1.98, 0]),
-            txt("UTC · NEXT DAY", 18, MUTED).move_to([4.0, 1.98, 0]),
+            txt("PONEDELJAK", 18, MUTED).move_to([-4.2, 1.98, 0]),
+            txt("LOKALNI OKVIR", 18, MUTED).move_to([-0.4, 1.98, 0]),
+            txt("UTC · ISTI DAN", 18, MUTED).move_to([4.0, 1.98, 0]),
         )
         rows = VGroup()
         for i, item in enumerate(DATA["expansion"]["occurrences"]):
@@ -316,7 +316,7 @@ class GpuTimePipeline(Scene):
             utc = txt(item["instant"][11:16] + "Z", 29, INK).move_to([4.0, y, 0])
             rule = line([-5.65, y - 0.46, 0], [5.65, y - 0.46, 0], FAINT, 1)
             rows.add(VGroup(day, local, utc, rule))
-        zone = txt("America/New_York", 22, MUTED).move_to([0, -2.35, 0])
+        zone = txt("Europe/Belgrade", 22, MUTED).move_to([0, -2.35, 0])
         self.play(FadeIn(column_titles), FadeIn(zone), run_time=0.4)
         self.play(LaggedStart(*[FadeIn(row, UP * 0.12) for row in rows], lag_ratio=0.32), run_time=2.4, cue="calendar_rows")
         outline = SurroundingRectangle(VGroup(rows[1][2], rows[2][2]), buff=0.22, stroke_color=BLUE, stroke_width=1.5)
@@ -324,8 +324,8 @@ class GpuTimePipeline(Scene):
         self.until(80)
 
         # 80–85: real exported calendar properties, not a fabricated API.
-        self.title("Return Dates and Rules", 10)
-        self.caption("Calendar property fragments, generated from the same schedule.")
+        self.title("Vrati datume i pravila", 10)
+        self.caption("Delovi kalendarskih svojstava, generisani iz istog rasporeda.")
         self.play(FadeOut(VGroup(column_titles, rows, zone, outline)), run_time=0.85)
         properties = DATA["rules"][0]
         rule_lines = VGroup(
@@ -342,9 +342,9 @@ class GpuTimePipeline(Scene):
         self.play(FadeOut(VGroup(rule_lines, self.heading, self.index, self.foot, brand)), run_time=0.85)
         logo = txt("gpu-time", 84).move_to([0, 0.9, 0])
         underline = line([-0.6, 0.12, 0], [0.6, 0.12, 0], BLUE, 3)
-        tagline = txt("Plain English. Precise Schedules.", 30).move_to([0, -0.55, 0])
-        facts = txt("Runs locally  ·  WebGPU + CPU  ·  24,761 parameters", 22, MUTED).move_to([0, -1.45, 0])
-        status = txt("Experimental English time parser", 18, MUTED).move_to([0, -2.5, 0])
+        tagline = txt("Jednostavan srpski. Precizni rasporedi.", 30).move_to([0, -0.55, 0])
+        facts = txt(f"Radi lokalno  ·  WebGPU + CPU  ·  {DATA['parameters']:,} parametara", 22, MUTED).move_to([0, -1.45, 0])
+        status = txt("Eksperimentalni srpski parser vremena", 18, MUTED).move_to([0, -2.5, 0])
         self.play(FadeIn(logo, UP * 0.1), ShowCreation(underline), run_time=1.2, cue="logo")
         self.play(FadeIn(tagline), run_time=0.55)
         self.play(FadeIn(facts), FadeIn(status), run_time=0.55)

@@ -12,10 +12,10 @@ import assert from "node:assert/strict";
 // Resolve against the repository root so the exporter runs from anywhere.
 const root = new URL("../", import.meta.url).pathname;
 
-const text = "every Monday from 8pm to 10pm";
+const text = "svaki ponedeljak od 8 uveče do 10 uveče";
 const context = {
-  reference: "2026-10-24T12:00:00-04:00",
-  timeZone: "America/New_York",
+  reference: "2026-10-17T12:00:00+02:00",
+  timeZone: "Europe/Belgrade",
   limit: 3,
 };
 const parser = await defineParser({ backend: "cpu" });

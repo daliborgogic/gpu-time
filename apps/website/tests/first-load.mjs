@@ -5,7 +5,7 @@ import { resolve, extname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
 
-const root = fileURLToPath(new URL("../dist/", import.meta.url));
+const root = fileURLToPath(new URL("../dist/client/", import.meta.url));
 const mime = {
   ".html": "text/html",
   ".js": "text/javascript",
@@ -113,7 +113,7 @@ try {
       const after = await snapshot();
       assert.equal(
         before.rows,
-        3,
+        1,
         `${width}px: render the example before JavaScript loads`,
       );
       assert.deepEqual(
@@ -235,7 +235,7 @@ try {
   await page.goto(url);
   assert.equal(
     await page.locator("#demo-dates li").count(),
-    3,
+    1,
     "The initial example also works without JavaScript",
   );
   await page.close();
@@ -250,7 +250,7 @@ try {
   });
   await cpuOnly.goto(url);
   const beforeCpuTyping = await cpuOnly.locator("#demo-dates").innerText();
-  await cpuOnly.locator("#demo-input").fill("sutra u 9ujutru");
+  await cpuOnly.locator("#demo-input").fill("sutra u 9 ujutru");
   await cpuOnly.waitForFunction(
     (before) =>
       document.querySelector("#demo-result").getAttribute("aria-busy") ===

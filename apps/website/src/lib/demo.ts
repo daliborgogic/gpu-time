@@ -1,9 +1,9 @@
 import type { ParseResult } from "gpu-time";
 
-export const example = "Svaki ponedeljak od 8popodne do 10popodne";
+export const example = "Svaki ponedeljak od 8 uveče do 10 uveče";
 
 // The code block hardcodes `example`'s output, so the demo carries its own.
-export const demoDefault = "zakaži večeru za 2. oktobar u osam popodne";
+export const demoDefault = "zakaži večeru za 2. oktobar u osam uveče";
 
 export type Kind = "date" | "time" | "repeat" | "duration";
 export interface Part {
@@ -19,13 +19,13 @@ export const kinds: { kind: Kind; label: string }[] = [
 ];
 
 export const examples: { use: string; text: string }[] = [
-  { use: "Podsetnik", text: "sutra u 9ujutru" },
+  { use: "Podsetnik", text: "sutra u 9 ujutru" },
   {
     use: "Večera, u sred rečenice",
-    text: "zakaži večeru za 2. oktobar u osam popodne",
+    text: "zakaži večeru za 2. oktobar u osam uveče",
   },
   { use: "Sastanak", text: "svaki radni dan u devet ujutru" },
-  { use: "Noćna smena", text: "petak u 10popodne do subota u 2ujutru" },
+  { use: "Noćna smena", text: "petak u 10 uveče do subota u 2 ujutru" },
   { use: "Putovanje", text: "od 4. septembar do 8. septembar" },
   { use: "Plata", text: "poslednji petak meseca" },
   { use: "Dvonedeljni ciklus", text: "svaki drugi petak u podne" },
@@ -158,9 +158,13 @@ export function format(result: ParseResult, reference: Date, timeZone: string) {
     return { date: dateFormat.format(start), time };
   });
 
+  const totalMs =
+    result.timings.tokenizeMs + result.timings.inferMs + result.timings.resolveMs;
+
   return {
     status,
     rows,
     context: `U odnosu na ${dateFormat.format(reference)} · ${timeZone}`,
+    meta: `${totalMs.toFixed(1)}ms · ${result.backend}`,
   };
 }

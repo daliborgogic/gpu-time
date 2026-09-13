@@ -48,11 +48,27 @@ example with JavaScript disabled. Use
 `LANDING_URL=http://127.0.0.1:4321/ node tests/first-load.mjs` from this
 directory to run the same checks against the development server.
 
+## Deploying to Cloudflare Workers
+
+The site builds via `@astrojs/cloudflare` (`astro.config.mjs`) as static assets only — there
+are no server routes, so `pnpm build` outputs plain files to `dist/client/` and no worker
+script runs at request time. `wrangler.jsonc` points `assets.directory` at that folder.
+
+```sh
+pnpm --filter @gpu-time/website cf:dev    # build, then serve locally via wrangler dev
+pnpm --filter @gpu-time/website deploy    # build, then wrangler deploy
+```
+
+`wrangler deploy` needs `wrangler login` first. The adapter auto-configures a `SESSION` KV
+binding and an `IMAGES` binding by default (auto-provisioned on deploy); neither is used by
+this site since it has no session state and serves images as plain files, not through
+Cloudflare's image-transform binding.
+
 ## Film provenance
 
 `public/media/gpu-time-neural.mp4` is the current parser walkthrough built in
 `../../video/`. That directory contains model traces, source/checkpoint hashes, narration, and render scripts. It
-shows the current 24,761-parameter model and direct dates/rules API, with no
+shows the current 32,953-parameter model and direct dates/rules API, with no
 legacy AST claims.
 
 The white-background film includes newly generated synthetic narration and timed
