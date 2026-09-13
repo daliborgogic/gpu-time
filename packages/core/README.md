@@ -12,6 +12,7 @@ import { parse } from "gpu-time";
 const result = await parse("Sub Ned 1popodne-8popodne Pon 10popodne-12ujutru", {
   reference: "2026-09-09T12:00:00+06:00",
   timeZone: "Asia/Dhaka",
+  limit: 12,
 });
 
 console.log(result.occurrences);
