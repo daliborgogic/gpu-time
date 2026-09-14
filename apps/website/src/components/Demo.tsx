@@ -94,6 +94,13 @@ export function Demo({ initial }: { initial: Formatted }) {
     return () => clearTimeout(timer);
   }, [text]);
 
+  // The server-rendered figure always reports "cpu" (SSR runs on Node, which
+  // has no WebGPU), so re-run once on mount to reflect the browser's real
+  // backend instead of leaving that placeholder on screen.
+  useEffect(() => {
+    void run(demoDefault);
+  }, []);
+
   return (
     <>
       <section
